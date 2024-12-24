@@ -1,0 +1,27 @@
+(ns clj-bytes.protocols
+  (:refer-clojure :exclude [-empty -count -seq]))
+
+(defprotocol BytesImpl
+  "Protocol for byte array implementation."
+  (-bytes? [this b])
+  (-class [this])
+  (-empty [this])
+  (-empty? [this b])
+  (-make [this n])
+  (-rand [this n])
+  (-seq->bytes [this s])
+  (-count [this b])
+  (-get [this b n])
+  (-set! [this b n i])
+  (-fill! [this b i])
+  (-seq [this b])
+  (-uget [this b n])
+  (-uset! [this b n i])
+  (-ufill! [this b i])
+  (-useq [this b])
+  (-sub [this b s e])
+  (-concat [this bs])
+  (-str->bytes [this s encoding])
+  (-bytes->str [this b encoding])
+  (-int->bytes [this i encoding])
+  (-bytes->int [this b encoding]))
