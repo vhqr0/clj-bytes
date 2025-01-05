@@ -42,8 +42,8 @@
 (defn bytes->hex
   ([b]
    (bytes->hex b :lower))
-  ([b alphebet]
-   (let [int->char (int->hex-char alphebet)]
+  ([b alphabet]
+   (let [int->char (int->hex-char alphabet)]
      (-> b b/useq (ints->hex-chars int->char) str/join))))
 
 (defn hex->bytes

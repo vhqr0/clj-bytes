@@ -42,6 +42,11 @@
   [s]
   (proto/-seq->bytes *impl* s))
 
+^:rct/test
+(comment
+  (bytes? (empty)) ; => true
+  )
+
 (defn count
   "Return length of bytes."
   [b]
