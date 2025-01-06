@@ -39,7 +39,7 @@
     empty-bytes
     (let [os (->> bs (map alength) (reductions +))
           nb (Arrays/copyOf (bytes (first bs)) (last os))]
-      (doseq [[o b] (zipmap (butlast os) (rest bs))]
+      (doseq [[o b] (map vector (butlast os) (rest bs))]
         (System/arraycopy b 0 nb o (alength b)))
       nb)))
 

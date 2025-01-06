@@ -52,7 +52,7 @@
 
 (defn useq
   [b]
-  (array-seq (js/Int8Array. b)))
+  (array-seq (js/Uint8Array. b)))
 
 (defn of-useq
   [s]
@@ -63,6 +63,14 @@
   (and (= (bytes-count b1) (bytes-count b2))
        (->> (map vector (useq b1) (useq b2))
             (every? (fn [[i1 i2]] (= i1 i2))))))
+
+(defn bytes-concat
+  [bs]
+  (let [os (->> bs (map bytes-concat) (reductions +))
+        na (js/Uint8Array. (last os))]
+    (doseq [[o b] (map vector (cons 0 (butlast os)) bs)]
+      (.set na (js/Uint8Array. b) o))
+    na.buffer))
 
 (def impl
   (reify
@@ -103,6 +111,10 @@
       (useq b))
     (-of-useq [_ s]
       (of-useq s))
+    (-sub [_ b s e]
+      (.slice b s e))
+    (-concat [_ bs]
+      (bytes-concat bs))
     (-str [_ b encoding]
       (-> (js/TextDecoder. encoding) (.decode b)))
     (-of-str [_ s encoding]
