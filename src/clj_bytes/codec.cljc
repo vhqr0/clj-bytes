@@ -146,7 +146,7 @@
            [end? chars] (ints-part->base64-chars-part ints-part int->char)]
        (when end?
          (assert (empty? ints)))
-       (concat chars (ints->base64-chars ints int->char))))))
+       (concat chars (ints->base64-chars int->char ints))))))
 
 (defn base64-chars->ints
   "Convert seq of base64 chars to seq of ints."
@@ -157,7 +157,7 @@
            [end? ints] (base64-chars-part->ints-part chars-part char->int)]
        (when end?
          (assert (empty? chars)))
-       (concat ints (base64-chars->ints chars char->int))))))
+       (concat ints (base64-chars->ints char->int chars))))))
 
 (defn ints->base64
   "Convert seq of ints to base64 str."
