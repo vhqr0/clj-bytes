@@ -1,0 +1,15 @@
+* clj-bytes
+
+** test
+
+#+begin_src sh
+  make test
+#+end_src
+
+** cljs dev
+
+.dir-locals.el example:
+
+#+begin_src emacs-lisp
+  ((clojurescript-mode . ((cider-clojure-cli-global-options . "-A:cljs:cljs-dev"))))
+#+end_src

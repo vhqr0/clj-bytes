@@ -142,9 +142,9 @@
   ([b]
    (sub! b 0 (count b)))
   ([b s e]
-  (if (and (= s 0) (= e (count b)))
-    b
-    (sub b s e))))
+   (if (and (= s 0) (= e (count b)))
+     b
+     (sub b s e))))
 
 (defn concat!
   "Impure version of `concat`, that means try to reuse input bytes,
