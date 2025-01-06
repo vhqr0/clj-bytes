@@ -1,5 +1,5 @@
 (ns clj-bytes.core
-  (:refer-clojure :exclude [instance? class empty empty? rand count get set! seq concat str int])
+  (:refer-clojure :exclude [instance? class rand empty empty? count get set! seq concat str int])
   (:require [clj-bytes.protocols :as proto]
             [clj-bytes.impl :as impl]
             [clj-bytes.codec :as codec]))
