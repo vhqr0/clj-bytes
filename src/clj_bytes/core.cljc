@@ -128,20 +128,23 @@
   ([b]
    (sub b 0 (count b)))
   ([b s e]
+   (assert (<= 0 s e (count b)))
    (proto/-sub *impl* b s e)))
 
 (defn concat
   "Return concatance of bytes."
   [& bs]
-  (apply proto/-concat *impl* bs))
+  (proto/-concat *impl* bs))
 
 (defn sub!
   "Impure version of `sub`, that means try to reuse input bytes,
   and caller have to make sure the input bytes is readonly."
-  [b s e]
+  ([b]
+   (sub! b 0 (count b)))
+  ([b s e]
   (if (and (= s 0) (= e (count b)))
     b
-    (sub b s e)))
+    (sub b s e))))
 
 (defn concat!
   "Impure version of `concat`, that means try to reuse input bytes,
@@ -151,6 +154,18 @@
     (cond (clojure.core/empty? bs) (empty)
           (clojure.core/empty? (rest bs)) (first bs)
           :else (apply concat bs))))
+
+^:rct/test
+(comment
+  (equal? (concat! (of-seq [1 2 3])) (of-seq [1 2 3])) ; => true
+  (equal? (concat! (of-seq [1 2 3]) (of-seq [4 5 6])) (of-seq [1 2 3 4 5 6])) ; => true
+  (equal? (concat! (empty) (of-seq [1 2 3]) (empty)) (of-seq [1 2 3])) ; => true
+  (equal? (concat! (of-seq [1 2 3]) (empty) (of-seq [4 5 6])) (of-seq [1 2 3 4 5 6])) ; => true
+  (equal? (sub! (of-seq [1 2 3 4 5]) 1 3) (of-seq [2 3])) ; => true
+  (equal? (sub! (of-seq [1 2 3 4 5]) 1 4) (of-seq [2 3 4])) ; => true
+  (equal? (sub! (of-seq [1 2 3 4 5]) 1 5) (of-seq [2 3 4 5])) ; => true
+  (equal? (sub! (of-seq [1 2 3 4 5])) (of-seq [1 2 3 4 5])) ; => true
+  )
 
 (defn str
   "Decode string."
@@ -166,6 +181,12 @@
   ([s encoding]
    (proto/-of-str *impl* s encoding)))
 
+^:rct/test
+(comment
+  (equal? (of-str "hello") (of-seq [104 101 108 108 111])) ; => true
+  (equal? (concat (of-str "hello, ") (of-str "world")) (of-str "hello, world")) ; => true
+  )
+
 (defn int
   "Decode integer."
   [b encoding]
@@ -175,6 +196,13 @@
   "Encode integer."
   [i encoding]
   (proto/-of-int *impl* i encoding))
+
+^:rct/test
+(comment
+  (equal? (of-int 0x1234 :uint16-be) (of-seq [0x12 0x34])) ; => true
+  (equal? (of-int 0x1234 :uint16-le) (of-seq [0x34 0x12])) ; => true
+  (int (of-seq [0x12 0x34]) :uint16-be) ; => 0x1234
+  )
 
 (defn hex
   "Encode hex string."
@@ -189,6 +217,14 @@
    (of-hex s :lower))
   ([s alphabet]
    (-> s (codec/hex->ints alphabet) of-useq)))
+
+^:rct/test
+(comment
+  (hex (of-seq [0x12 0x34])) ; => "1234"
+  (hex (of-seq [0x1a 0x2b])) ; => "1a2b"
+  (hex (of-seq [0x1a 0x2b]) :upper) ; => "1A2B"
+  (equal? (of-hex "1a2b") (of-seq [0x1a 0x2b])) ; => true
+  )
 
 (defn base64
   "Encode base64 string."
