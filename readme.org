@@ -1,12 +1,58 @@
 * clj-bytes
 
-** test
+** why
+
+There is already a library to handle binary data:
+https://github.com/clj-commons/byte-streams. But this library only
+supports the JVM platform and is too impure.
+
+The reason I wrote this project is to provide a platform-independent
+pure binary data basic interface, as well as a set of basic
+utilities. The binary data implementation can be specified via a
+dynamic variable (clj-bytes.core.*impl*), and a reasonable default
+implementation will be provided for different platforms. Currently
+there are byte-array for JVM and ArrayBuffer for WEB.
+
+I hope this project can help write platform-independent, pure binary
+data processing logic. And it can be used in conjunction with other
+binary data related libraries (although no longer platform-independent
+and pure).
+
+** example
+
+#+begin_src clojure
+  (require '[clj-bytes.core :as b])
+  (b/make 4) ; make bytes with length of 4
+  (b/rand 4) ; make random bytes with length of 4
+  (b/empty) ; make empty bytes
+  (b/get (b/rand 4) 0) ; get first byte
+  (b/set! (b/make 4) 0 1) ; set first byte to 1
+  (b/seq (b/rand 4)) ; convert bytes to seq
+  (b/of-seq [1 2 3 4]) ; make bytes from seq
+  (b/sub (b/rand 4) 1 2) ; make sub bytes from 1 to 2
+  (b/concat (b/rand 1) (b/rand 2) (b/rand 3)) ; concat any num of bytes
+  (b/str (b/seq [104 101 108 108 111])) ; convert bytes to string
+  (b/of-str "hello") ; make bytes from string
+  (b/int (b/seq [0x12 0x34]) :uint16-be) ; convert bytes to integer
+  (b/of-int 0x1234 :uint16-be) ; make bytes from int
+
+  ;; pure clojure impl of codec.
+  ;; *Don't rely on them.*
+  (b/hex (b/seq [0x12 0x34])) ; convert bytes to hex string
+  (b/of-hex "1234") ; make bytes from hex string
+  (b/base64 (b/of-str "hello")) ; convert bytes to base64 string
+  (b/of-base64 "aGVsbG8=") ; make bytes from base64
+#+end_src
+
+** dev
+
+*** test
 
 #+begin_src sh
   make test
 #+end_src
 
-** cljs dev
+*** cljs
 
 .dir-locals.el example:
 
