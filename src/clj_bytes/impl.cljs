@@ -1,5 +1,4 @@
 (ns clj-bytes.impl
-  (:refer-clojure :exclude [seq])
   (:require [clj-bytes.protocols :as proto]))
 
 (def byte-class
@@ -30,11 +29,11 @@
   [b i]
   (.fill (js/Int8Array. b) i))
 
-(defn seq
+(defn bytes->seq
   [b]
   (array-seq (js/Int8Array. b)))
 
-(defn of-seq
+(defn seq->bytes
   [s]
   (.-buffer (js/Int8Array.from s)))
 
@@ -50,18 +49,18 @@
   [b i]
   (.fill (js/Uint8Array. b) i))
 
-(defn useq
+(defn bytes->useq
   [b]
   (array-seq (js/Uint8Array. b)))
 
-(defn of-useq
+(defn useq->bytes
   [s]
   (.-buffer (js/Uint8Array.from s)))
 
 (defn bytes-equal?
   [b1 b2]
   (and (= (bytes-count b1) (bytes-count b2))
-       (->> (map vector (useq b1) (useq b2))
+       (->> (map vector (bytes->useq b1) (bytes->useq b2))
             (every? (fn [[i1 i2]] (= i1 i2))))))
 
 (defn bytes-concat
@@ -71,6 +70,83 @@
     (doseq [[o b] (map vector (cons 0 (butlast os)) bs)]
       (.set na (js/Uint8Array. b) o))
     na.buffer))
+
+(defn bytes-reverse
+  [b]
+  (-> (js/Uint8Array. b) .reverse .-buffer))
+
+(defn array-type->from-int-convertor
+  [array-type]
+  #(.-buffer (.of array-type %)))
+
+(defn from-int-convertor->from-int-be-convertor
+  [from-int-convertor]
+  #(-> % from-int-convertor bytes-reverse))
+
+(defn array-type->to-int-convertor
+  [array-type]
+  (fn [b]
+    (let [a (new array-type b)]
+      (assert (= a.length 1))
+      (aget a 0))))
+
+(defn to-int-convertor->to-int-be-convertor
+  [to-int-convertor]
+  #(-> % bytes-reverse to-int-convertor))
+
+(def int8->bytes   (array-type->from-int-convertor js/Int8Array))
+(def int16->bytes  (array-type->from-int-convertor js/Int16Array))
+(def int32->bytes  (array-type->from-int-convertor js/Int32Array))
+(def uint8->bytes  (array-type->from-int-convertor js/Uint8Array))
+(def uint16->bytes (array-type->from-int-convertor js/Uint16Array))
+(def uint32->bytes (array-type->from-int-convertor js/Uint32Array))
+
+(def int16-be->bytes  (from-int-convertor->from-int-be-convertor int16->bytes))
+(def int32-be->bytes  (from-int-convertor->from-int-be-convertor int32->bytes))
+(def uint16-be->bytes (from-int-convertor->from-int-be-convertor uint16->bytes))
+(def uint32-be->bytes (from-int-convertor->from-int-be-convertor uint32->bytes))
+
+(def bytes->int8   (array-type->to-int-convertor js/Int8Array))
+(def bytes->int16  (array-type->to-int-convertor js/Int16Array))
+(def bytes->int32  (array-type->to-int-convertor js/Int32Array))
+(def bytes->uint8  (array-type->to-int-convertor js/Uint8Array))
+(def bytes->uint16 (array-type->to-int-convertor js/Uint16Array))
+(def bytes->uint32 (array-type->to-int-convertor js/Uint32Array))
+
+(def bytes->int16-be  (to-int-convertor->to-int-be-convertor bytes->int16))
+(def bytes->int32-be  (to-int-convertor->to-int-be-convertor bytes->int32))
+(def bytes->uint16-be (to-int-convertor->to-int-be-convertor bytes->uint16))
+(def bytes->uint32-be (to-int-convertor->to-int-be-convertor bytes->uint32))
+
+(defn int->bytes
+  "Convert int to bytes."
+  [i encoding]
+  (case encoding
+    :int8      (int8->bytes      i)
+    :uint8     (uint8->bytes     i)
+    :int16-le  (int16->bytes     i)
+    :int32-le  (int32->bytes     i)
+    :uint16-le (uint16->bytes    i)
+    :uint32-le (uint32->bytes    i)
+    :int16-be  (int16-be->bytes  i)
+    :int32-be  (int32-be->bytes  i)
+    :uint16-be (uint16-be->bytes i)
+    :uint32-be (uint32-be->bytes i)))
+
+(defn bytes->int
+  "Convert bytes to int."
+  [b encoding]
+  (case encoding
+    :int8      (bytes->int8      b)
+    :uint8     (bytes->uint8     b)
+    :int16-le  (bytes->int16     b)
+    :int32-le  (bytes->int32     b)
+    :uint16-le (bytes->uint16    b)
+    :uint32-le (bytes->uint32    b)
+    :int16-be  (bytes->int16-be  b)
+    :int32-be  (bytes->int32-be  b)
+    :uint16-be (bytes->uint16-be b)
+    :uint32-be (bytes->uint32-be b)))
 
 (def impl
   (reify
@@ -98,9 +174,9 @@
     (-fill! [_ b i]
       (bytes-fill! b i))
     (-seq [_ b]
-      (seq b))
+      (bytes->seq b))
     (-of-seq [_ s]
-      (of-seq s))
+      (seq->bytes s))
     (-uget [_ b n]
       (bytes-uget b n))
     (-uset! [_ b n i]
@@ -108,9 +184,9 @@
     (-ufill! [_ b i]
       (bytes-ufill! b i))
     (-useq [_ b]
-      (useq b))
+      (bytes->useq b))
     (-of-useq [_ s]
-      (of-useq s))
+      (useq->bytes s))
     (-sub [_ b s e]
       (.slice b s e))
     (-concat [_ bs]
@@ -118,4 +194,8 @@
     (-str [_ b encoding]
       (-> (js/TextDecoder. encoding) (.decode b)))
     (-of-str [_ s encoding]
-      (-> (js/TextEncoder. encoding) (.encode s)))))
+      (-> (js/TextEncoder. encoding) (.encode s)))
+    (-int [_ b encoding]
+      (bytes->int b encoding))
+    (-of-int [_ i encoding]
+      (int->bytes i encoding))))
