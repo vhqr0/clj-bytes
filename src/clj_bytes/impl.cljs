@@ -71,52 +71,29 @@
       (.set na (js/Uint8Array. b) o))
     na.buffer))
 
-(defn bytes-reverse
-  [b]
-  (-> (js/Uint8Array. b) .reverse .-buffer))
+(def int8->bytes  (fn [i] (.-buffer (js/Int8Array.of i))))
+(def uint8->bytes (fn [i] (.-buffer (js/Uint8Array.of i))))
 
-(defn array-type->from-int-convertor
-  [array-type]
-  #(.-buffer (.of array-type %)))
+(def int16-be->bytes  (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setInt16 0 i false)))))
+(def int32-be->bytes  (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setInt32 0 i false)))))
+(def uint16-be->bytes (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setUint16 0 i false)))))
+(def uint32-be->bytes (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setUint32 0 i false)))))
+(def int16-le->bytes  (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setInt16 0 i true)))))
+(def int32-le->bytes  (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setInt32 0 i true)))))
+(def uint16-le->bytes (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setUint16 0 i true)))))
+(def uint32-le->bytes (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setUint32 0 i true)))))
 
-(defn from-int-convertor->from-int-be-convertor
-  [from-int-convertor]
-  #(-> % from-int-convertor bytes-reverse))
+(def bytes->int8  (fn [b] (assert (= b.byteLength 1)) (aget (js/Int8Array. b) 0)))
+(def bytes->uint8 (fn [b] (assert (= b.byteLength 1)) (aget (js/Uint8Array. b) 0)))
 
-(defn array-type->to-int-convertor
-  [array-type]
-  (fn [b]
-    (let [a (new array-type b)]
-      (assert (= a.length 1))
-      (aget a 0))))
-
-(defn to-int-convertor->to-int-be-convertor
-  [to-int-convertor]
-  #(-> % bytes-reverse to-int-convertor))
-
-(def int8->bytes   (array-type->from-int-convertor js/Int8Array))
-(def int16->bytes  (array-type->from-int-convertor js/Int16Array))
-(def int32->bytes  (array-type->from-int-convertor js/Int32Array))
-(def uint8->bytes  (array-type->from-int-convertor js/Uint8Array))
-(def uint16->bytes (array-type->from-int-convertor js/Uint16Array))
-(def uint32->bytes (array-type->from-int-convertor js/Uint32Array))
-
-(def int16-be->bytes  (from-int-convertor->from-int-be-convertor int16->bytes))
-(def int32-be->bytes  (from-int-convertor->from-int-be-convertor int32->bytes))
-(def uint16-be->bytes (from-int-convertor->from-int-be-convertor uint16->bytes))
-(def uint32-be->bytes (from-int-convertor->from-int-be-convertor uint32->bytes))
-
-(def bytes->int8   (array-type->to-int-convertor js/Int8Array))
-(def bytes->int16  (array-type->to-int-convertor js/Int16Array))
-(def bytes->int32  (array-type->to-int-convertor js/Int32Array))
-(def bytes->uint8  (array-type->to-int-convertor js/Uint8Array))
-(def bytes->uint16 (array-type->to-int-convertor js/Uint16Array))
-(def bytes->uint32 (array-type->to-int-convertor js/Uint32Array))
-
-(def bytes->int16-be  (to-int-convertor->to-int-be-convertor bytes->int16))
-(def bytes->int32-be  (to-int-convertor->to-int-be-convertor bytes->int32))
-(def bytes->uint16-be (to-int-convertor->to-int-be-convertor bytes->uint16))
-(def bytes->uint32-be (to-int-convertor->to-int-be-convertor bytes->uint32))
+(def bytes->int16-be  (fn [b] (assert (= b.byteLength 2)) (-> (js/DateView. b) (.getInt16 0 false))))
+(def bytes->int32-be  (fn [b] (assert (= b.byteLength 4)) (-> (js/DateView. b) (.getInt32 0 false))))
+(def bytes->uint16-be (fn [b] (assert (= b.byteLength 2)) (-> (js/DateView. b) (.getUint16 0 false))))
+(def bytes->uint32-be (fn [b] (assert (= b.byteLength 4)) (-> (js/DateView. b) (.getUint32 0 false))))
+(def bytes->int16-le  (fn [b] (assert (= b.byteLength 2)) (-> (js/DateView. b) (.getInt16 0 true))))
+(def bytes->int32-le  (fn [b] (assert (= b.byteLength 4)) (-> (js/DateView. b) (.getInt32 0 true))))
+(def bytes->uint16-le (fn [b] (assert (= b.byteLength 2)) (-> (js/DateView. b) (.getUint16 0 true))))
+(def bytes->uint32-le (fn [b] (assert (= b.byteLength 4)) (-> (js/DateView. b) (.getUint32 0 true))))
 
 (defn int->bytes
   "Convert int to bytes."
@@ -124,14 +101,14 @@
   (case encoding
     :int8      (int8->bytes      i)
     :uint8     (uint8->bytes     i)
-    :int16-le  (int16->bytes     i)
-    :int32-le  (int32->bytes     i)
-    :uint16-le (uint16->bytes    i)
-    :uint32-le (uint32->bytes    i)
     :int16-be  (int16-be->bytes  i)
     :int32-be  (int32-be->bytes  i)
     :uint16-be (uint16-be->bytes i)
-    :uint32-be (uint32-be->bytes i)))
+    :uint32-be (uint32-be->bytes i)
+    :int16-le  (int16-le->bytes  i)
+    :int32-le  (int32-le->bytes  i)
+    :uint16-le (uint16-le->bytes i)
+    :uint32-le (uint32-le->bytes i)))
 
 (defn bytes->int
   "Convert bytes to int."
@@ -139,14 +116,14 @@
   (case encoding
     :int8      (bytes->int8      b)
     :uint8     (bytes->uint8     b)
-    :int16-le  (bytes->int16     b)
-    :int32-le  (bytes->int32     b)
-    :uint16-le (bytes->uint16    b)
-    :uint32-le (bytes->uint32    b)
     :int16-be  (bytes->int16-be  b)
     :int32-be  (bytes->int32-be  b)
     :uint16-be (bytes->uint16-be b)
-    :uint32-be (bytes->uint32-be b)))
+    :uint32-be (bytes->uint32-be b)
+    :int16-le  (bytes->int16-le  b)
+    :int32-le  (bytes->int32-le  b)
+    :uint16-le (bytes->uint16-le b)
+    :uint32-le (bytes->uint32-le b)))
 
 (def impl
   (reify
