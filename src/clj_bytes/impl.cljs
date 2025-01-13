@@ -164,12 +164,12 @@
       (bytes-uset! b n i))
     (-ufill! [_ b i]
       (bytes-ufill! b i))
-    (-equal? [_ b1 s1 e1 b2 s2 e2]
-      (bytes-equal? b1 s1 e1 b2 s2 e2))
     (-useq [_ b]
       (bytes->useq b))
     (-of-useq [_ s]
       (useq->bytes s))
+    (-equal? [_ b1 s1 e1 b2 s2 e2]
+      (bytes-equal? b1 s1 e1 b2 s2 e2))
     (-sub [_ b s e]
       (bytes-sub b s e))
     (-concat [_ bs]
