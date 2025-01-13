@@ -159,7 +159,7 @@
           (clojure.core/empty? (rest bs)) (first bs)
           :else (apply concat bs))))
 
-(defn split!
+(defn split-at!
   "Split bytes at n."
   [n b]
   [(sub! b 0 n) (sub! b n (count b))])
@@ -175,8 +175,8 @@
   (equal? (sub! (of-seq [1 2 3 4 5]) 1 4) (of-seq [2 3 4])) ; => true
   (equal? (sub! (of-seq [1 2 3 4 5]) 1 5) (of-seq [2 3 4 5])) ; => true
   (equal? (sub! (of-seq [1 2 3 4 5])) (of-seq [1 2 3 4 5])) ; => true
-  (equal? (first (split! 2 (of-seq [1 2 3 4 5]))) (of-seq [1 2])) ; => true
-  (equal? (second (split! 2 (of-seq [1 2 3 4 5]))) (of-seq [3 4 5])) ; => true
+  (equal? (first (split-at! 2 (of-seq [1 2 3 4 5]))) (of-seq [1 2])) ; => true
+  (equal? (second (split-at! 2 (of-seq [1 2 3 4 5]))) (of-seq [3 4 5])) ; => true
   )
 
 (defn str
