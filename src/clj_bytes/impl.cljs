@@ -58,14 +58,20 @@
   (.-buffer (js/Uint8Array.from s)))
 
 (defn bytes-equal?
-  [b1 b2]
-  (and (= (bytes-count b1) (bytes-count b2))
-       (->> (map vector (bytes->useq b1) (bytes->useq b2))
-            (every? (fn [[i1 i2]] (= i1 i2))))))
+  [b1 s1 e1 b2 s2 e2]
+  (and (= (- e1 s1) (- e2 s2))
+       (let [a1 (js/Uint8Array. b1)
+             a2 (js/Uint8Array. b2)]
+         (->> (range (- e1 s1))
+              (every? #(= (aget a1 (+ s1 %)) (aget a2 (+ s2 %))))))))
+
+(defn bytes-sub
+  [b s e]
+  (.slice b s e))
 
 (defn bytes-concat
   [bs]
-  (let [os (->> bs (map bytes-concat) (reductions +))
+  (let [os (->> bs (map bytes-count) (reductions +))
         na (js/Uint8Array. (last os))]
     (doseq [[o b] (map vector (cons 0 (butlast os)) bs)]
       (.set na (js/Uint8Array. b) o))
@@ -140,8 +146,6 @@
       (make-bytes 0))
     (-empty? [_ b]
       (-> b bytes-count zero?))
-    (-equal? [_ b1 b2]
-      (bytes-equal? b1 b2))
     (-count [_ b]
       (bytes-count b))
     (-get [_ b n]
@@ -160,12 +164,14 @@
       (bytes-uset! b n i))
     (-ufill! [_ b i]
       (bytes-ufill! b i))
+    (-equal? [_ b1 s1 e1 b2 s2 e2]
+      (bytes-equal? b1 s1 e1 b2 s2 e2))
     (-useq [_ b]
       (bytes->useq b))
     (-of-useq [_ s]
       (useq->bytes s))
     (-sub [_ b s e]
-      (.slice b s e))
+      (bytes-sub b s e))
     (-concat [_ bs]
       (bytes-concat bs))
     (-str [_ b encoding]

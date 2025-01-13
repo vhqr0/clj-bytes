@@ -22,17 +22,32 @@
   [n]
   (let [b (byte-array n)] (.nextBytes *random* b) b))
 
-(defn- byte->uint
+(defn byte->uint
   "Convert byte to unsigned int."
   [i]
   (bit-and 0xff i))
 
-(defn- uint->byte
+(defn uint->byte
   "Convert unsigned int to byte."
   [i]
   (unchecked-byte i))
 
-(defn concat-bytes
+(defn bytes-fill!
+  "Fill bytes."
+  [b i]
+  (Arrays/fill (bytes b) (byte i)))
+
+(defn bytes-equal?
+  "Pred whether two bytes are equal."
+  [b1 s1 e1 b2 s2 e2]
+  (Arrays/equals b1 s1 e1 b2 s2 e2))
+
+(defn bytes-sub
+  "Return sub-bytes of bytes."
+  [b s e]
+  (Arrays/copyOfRange (bytes b) s e))
+
+(defn bytes-concat
   "Concat seq of bytes."
   [bs]
   (if (empty? bs)
@@ -43,7 +58,7 @@
         (System/arraycopy b 0 nb o (alength b)))
       nb)))
 
-(defn- reverse-bytes
+(defn- bytes-reverse
   "Reverse bytes."
   [b]
   (->> b reverse byte-array))
@@ -72,7 +87,7 @@
   [name from-int-convertor]
   `(defn- ~name
      [^long ~'i]
-     (-> ~'i ~from-int-convertor reverse-bytes)))
+     (-> ~'i ~from-int-convertor bytes-reverse)))
 
 (defmacro define-to-int-convertor
   {:doc "Construct -to-int convert function."
@@ -97,7 +112,7 @@
   [name to-int-convertor]
   `(defn- ~name
      [^bytes ~'b]
-     (-> ~'b reverse-bytes ~to-int-convertor)))
+     (-> ~'b bytes-reverse ~to-int-convertor)))
 
 (defn- int8->bytes [i] (let [b (byte-array 1)] (-> b (aset-byte 0 i)) b))
 
@@ -180,8 +195,6 @@
       empty-bytes)
     (-empty? [_ b]
       (zero? (alength b)))
-    (-equal? [_ b1 b2]
-      (Arrays/equals (bytes b1) (bytes b2)))
     (-count [_ b]
       (alength (bytes b)))
     (-get [_ b n]
@@ -189,7 +202,7 @@
     (-set! [_ b n i]
       (aset-byte (bytes b) n i))
     (-fill! [_ b i]
-      (Arrays/fill (bytes b) (byte i)))
+      (bytes-fill! b i))
     (-seq [_ b]
       (seq b))
     (-of-seq [_ s]
@@ -199,15 +212,17 @@
     (-uset! [_ b n i]
       (aset-byte (bytes b) n (uint->byte i)))
     (-ufill! [_ b i]
-      (Arrays/fill (bytes b) (byte (uint->byte i))))
+      (bytes-fill! b (uint->byte i)))
     (-useq [_ b]
       (->> (seq b) (map byte->uint)))
     (-of-useq [_ s]
       (byte-array (seq s)))
+    (-equal? [_ b1 s1 e1 b2 s2 e2]
+      (bytes-equal? b1 s1 e1 b2 s2 e2))
     (-sub [_ b s e]
-      (Arrays/copyOfRange (bytes b) s e))
+      (bytes-sub b s e))
     (-concat [_ bs]
-      (concat-bytes bs))
+      (bytes-concat bs))
     (-str [_ b encoding]
       (String. (bytes b) ^String encoding))
     (-of-str [_ s encoding]

@@ -38,11 +38,6 @@
   [b]
   (proto/-empty? *impl* b))
 
-(defn equal?
-  "Pred whether two bytes are equal."
-  [b1 b2]
-  (proto/-equal? *impl* b1 b2))
-
 (defn count
   "Return length of bytes."
   [b]
@@ -54,7 +49,6 @@
   (empty? (empty)) ; => true
   (empty? (make 0)) ; => true
   (empty? (make 1)) ; => false
-  (equal? (empty) (empty)) ; => true
   (count (make 4)) ; => 4
   (count (rand 4)) ; => 4
   (count (empty)) ; => 0
@@ -123,6 +117,14 @@
   (-> (of-useq [0 1]) (ufill! 257) (uget 0)) ; => 1
   )
 
+(defn equal?
+  "Pred whether two bytes are equal."
+  ([b1 b2]
+   (equal? b1 0 (count b1) b2 0 (count b2)))
+  ([b1 s1 e1 b2 s2 e2]
+   (assert (and (<= 0 s1 e1 (count b1)) (<= 0 s2 e2 (count b2))))
+   (proto/-equal? *impl* b1 s1 e1 b2 s2 e2)))
+
 (defn sub
   "Return sub-bytes of bytes."
   ([b]
@@ -142,9 +144,11 @@
   ([b]
    (sub! b 0 (count b)))
   ([b s e]
-   (if (and (= s 0) (= e (count b)))
-     b
-     (sub b s e))))
+   (if (= s e)
+     (empty)
+     (if (and (= s 0) (= e (count b)))
+       b
+       (sub b s e)))))
 
 (defn concat!
   "Impure version of `concat`, that means try to reuse input bytes,
@@ -155,8 +159,14 @@
           (clojure.core/empty? (rest bs)) (first bs)
           :else (apply concat bs))))
 
+(defn split!
+  "Split bytes at n."
+  [n b]
+  [(sub! b 0 n) (sub! b n (count b))])
+
 ^:rct/test
 (comment
+  (equal? (empty) (empty)) ; => true
   (equal? (concat! (of-seq [1 2 3])) (of-seq [1 2 3])) ; => true
   (equal? (concat! (of-seq [1 2 3]) (of-seq [4 5 6])) (of-seq [1 2 3 4 5 6])) ; => true
   (equal? (concat! (empty) (of-seq [1 2 3]) (empty)) (of-seq [1 2 3])) ; => true
@@ -165,6 +175,8 @@
   (equal? (sub! (of-seq [1 2 3 4 5]) 1 4) (of-seq [2 3 4])) ; => true
   (equal? (sub! (of-seq [1 2 3 4 5]) 1 5) (of-seq [2 3 4 5])) ; => true
   (equal? (sub! (of-seq [1 2 3 4 5])) (of-seq [1 2 3 4 5])) ; => true
+  (equal? (first (split! 2 (of-seq [1 2 3 4 5]))) (of-seq [1 2])) ; => true
+  (equal? (second (split! 2 (of-seq [1 2 3 4 5]))) (of-seq [3 4 5])) ; => true
   )
 
 (defn str
