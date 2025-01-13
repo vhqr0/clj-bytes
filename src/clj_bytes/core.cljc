@@ -125,6 +125,23 @@
    (assert (and (<= 0 s1 e1 (count b1)) (<= 0 s2 e2 (count b2))))
    (proto/-equal? *impl* b1 s1 e1 b2 s2 e2)))
 
+(defn index-of
+  "Find needle in haystack, return index of needle, or -1 if not found."
+  ([h n]
+   (index-of h n 0 (count h)))
+  ([h n s e]
+   (assert (<= 0 s e (count h)))
+   (proto/-index-of *impl* h n s e)))
+
+^:rct/test
+(comment
+  (equal? (empty) (empty)) ; => true
+  (equal? (empty) (make 1)) ; => false
+  (index-of (of-seq [1 2 3 4 5]) (of-seq [3 4])) ; => 2
+  (index-of (of-seq [1 2 3 4 5]) (of-seq [4])) ; => 3
+  (index-of (of-seq [1 2 3 4 5]) (of-seq [4 3])) ; => -1
+  )
+
 (defn sub
   "Return sub-bytes of bytes."
   ([b]
@@ -166,7 +183,6 @@
 
 ^:rct/test
 (comment
-  (equal? (empty) (empty)) ; => true
   (equal? (concat! (of-seq [1 2 3])) (of-seq [1 2 3])) ; => true
   (equal? (concat! (of-seq [1 2 3]) (of-seq [4 5 6])) (of-seq [1 2 3 4 5 6])) ; => true
   (equal? (concat! (empty) (of-seq [1 2 3]) (empty)) (of-seq [1 2 3])) ; => true

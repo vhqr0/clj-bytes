@@ -21,6 +21,7 @@
   (-useq [this b])
   (-of-useq [this b])
   (-equal? [this b1 s1 e1 b2 s2 e2])
+  (-index-of [this h n s e])
   (-sub [this b s e])
   (-concat [this bs])
   (-str [this b encoding])

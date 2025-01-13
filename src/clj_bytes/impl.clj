@@ -42,6 +42,21 @@
   [b1 s1 e1 b2 s2 e2]
   (Arrays/equals b1 s1 e1 b2 s2 e2))
 
+(defn bytes-index-of
+  "Find needle in haystack."
+  [b n s e]
+  (let [b (bytes b)
+        n (bytes n)
+        c (long (alength n))
+        s (long s)
+        e (long (- e c))]
+    (loop [s s]
+      (if (> s e)
+        -1
+        (if (Arrays/equals b s (+ s c) n 0 c)
+          s
+          (recur (inc s)))))))
+
 (defn bytes-sub
   "Return sub-bytes of bytes."
   [b s e]
@@ -219,6 +234,8 @@
       (byte-array (seq s)))
     (-equal? [_ b1 s1 e1 b2 s2 e2]
       (bytes-equal? b1 s1 e1 b2 s2 e2))
+    (-index-of [_ h n s e]
+      (bytes-index-of h n s e))
     (-sub [_ b s e]
       (bytes-sub b s e))
     (-concat [_ bs]
