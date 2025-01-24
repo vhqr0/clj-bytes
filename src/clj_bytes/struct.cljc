@@ -265,14 +265,14 @@
 (defn wrap-int
   "Wrap bytes-to-bytes struct by int."
   [st encoding]
-  {:type :wrap
-   :pack-fn #(b/of-int % encoding)
-   :unpack-fn #(b/int % encoding)
-   :struct st})
+  (-> st
+      (wrap
+       #(b/of-int % encoding)
+       #(b/int % encoding))))
 
 (defmethod expand :int [{:keys [encoding]}]
   (let [c (int-encoding->bytes-length encoding)]
-    (-> {:type :bytes-fixed :length c}
+    (-> (bytes-fixed c)
         (wrap-int encoding))))
 
 (defn int
@@ -361,13 +361,13 @@
   ([st]
    (wrap-str st nil))
   ([st encoding]
-   {:type :wrap
-    :pack-fn #(b/of-str % encoding)
-    :unpack-fn #(b/str % encoding)
-    :struct st}))
+   (-> st
+       (wrap
+        #(b/of-str % encoding)
+        #(b/str % encoding)))))
 
 (defmethod expand :str [{:keys [encoding]}]
-  (-> {:type :bytes}
+  (-> bytes
       (wrap-str encoding)))
 
 (def str
@@ -375,7 +375,7 @@
   {:type :str})
 
 (defmethod expand :line [{:keys [encoding end]}]
-  (-> {:type :bytes-delimited :delimiter (b/of-str end encoding)}
+  (-> (bytes-delimited (b/of-str end encoding))
       (wrap-str encoding)))
 
 (defn line
