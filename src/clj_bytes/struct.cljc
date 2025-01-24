@@ -90,9 +90,7 @@
 ;;;; coll-of
 
 (defmethod pack :coll-of [ds {:keys [struct]}]
-  (->> ds
-       (map #(pack % struct))
-       (apply b/concat!)))
+  (->> ds (map #(pack % struct)) b/concat-of-seq!))
 
 (defmethod unpack :coll-of [b {:keys [struct]}]
   [(unpack-many b struct) (b/empty)])
@@ -102,7 +100,7 @@
 (defmethod pack :tuple [ds {:keys [structs]}]
   (if-not (= (count ds) (count structs))
     (throw-struct-error "must pack specified num of data")
-    (->> (map pack ds structs) (apply b/concat!))))
+    (->> (map pack ds structs) b/concat-of-seq!)))
 
 (defmethod unpack :tuple [b {:keys [structs]}]
   (loop [ds [] b b sts structs]
@@ -136,7 +134,7 @@
        (map
         (fn [[k st]]
           (pack (get m k) st)))
-       (apply b/concat!)))
+       b/concat-of-seq!))
 
 (defmethod unpack :keys [b {:keys [key-structs]}]
   (loop [m {} b b ksts key-structs]
@@ -159,7 +157,7 @@
        (map
         (fn [[k st-fn]]
           (pack (get m k) (st-fn m))))
-       (apply b/concat!)))
+       b/concat-of-seq!))
 
 (defmethod unpack :key-fns [b {:keys [key-struct-fns]}]
   (loop [m {} b b kstfns key-struct-fns]
@@ -213,6 +211,7 @@
 ;;;; bytes-delimited
 
 (defmethod pack :bytes-delimited [d {:keys [delimiter]}]
+  ;; use pure concat to inhibit possibile modification of delimiter
   (b/concat d delimiter))
 
 (defmethod unpack :bytes-delimited [b {:keys [delimiter]}]
