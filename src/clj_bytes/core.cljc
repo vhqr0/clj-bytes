@@ -198,16 +198,18 @@
 (defn str
   "Decode string."
   ([b]
-   (str b "utf-8"))
+   (str b nil))
   ([b encoding]
-   (proto/-str *impl* b encoding)))
+   (let [encoding (or encoding "utf-8")]
+     (proto/-str *impl* b encoding))))
 
 (defn of-str
   "Encode string."
   ([s]
-   (of-str s "utf-8"))
+   (of-str s nil))
   ([s encoding]
-   (proto/-of-str *impl* s encoding)))
+   (let [encoding (or encoding "utf-8")]
+     (proto/-of-str *impl* s encoding))))
 
 ^:rct/test
 (comment
