@@ -258,6 +258,10 @@
    :uint16-le 2
    :uint32-le 4})
 
+(def bytes-length->uint-be-encoding
+  "Mapping from bytes length to uint be encoding."
+  {1 :uint8 2 :uint16-be 4 :uint32-be})
+
 (defn wrap-int
   "Wrap bytes-to-bytes struct by int."
   [st encoding]
@@ -288,6 +292,67 @@
 (def int64-le  (int :int64-le))
 (def uint16-le (int :uint16-le))
 (def uint32-le (int :uint32-le))
+
+;;;; bits
+
+(defn bits-lengths->bytes-length
+  "Mapping from bits lengths to bytes length."
+  [cs]
+  (let [c (->> cs (reduce +))]
+    (assert (zero? (mod c 8)))
+    (bit-shift-right c 3)))
+
+(defn bits-lengths->int-offsets
+  "Mapping from bits lengths to int offsets."
+  [cs]
+  (->> cs reverse (reductions + 0) butlast reverse vec))
+
+(defn bits-lengths->int-masks
+  "Mapping from bits lengths to int masks."
+  [cs]
+  (->> cs (mapv #(dec (bit-shift-left 1 %)))))
+
+^:rct/test
+(comment
+  (bits-lengths->bytes-length [2 4 3 4 3]) ; => 2
+  (bits-lengths->int-offsets [2 4 3 4 3]) ; => [14 10 7 3 0]
+  (bits-lengths->int-masks [2 4 3 4 3]) ; => [3 15 7 15 7]
+  )
+
+(defn bits->int
+  "Convert bits to int."
+  [bits offsets]
+  (reduce + (map bit-shift-left bits offsets)))
+
+(defn int->bits
+  "Convert int to bits."
+  [i offsets masks]
+  (-> (fn [offset mask]
+        (-> i (bit-shift-right offset) (bit-and mask)))
+      (mapv offsets masks)))
+
+(defn bits
+  "Construct bits struct."
+  [cs]
+  (let [encoding (-> cs bits-lengths->bytes-length bytes-length->uint-be-encoding)
+        offsets (bits-lengths->int-offsets cs)
+        masks (bits-lengths->int-masks cs)]
+    (-> (int encoding)
+        (wrap
+         #(bits->int % offsets)
+         #(int->bits % offsets masks)))))
+
+^:rct/test
+(comment
+  (-> [2 9 1]
+      (pack (bits [2 4 2]))
+      (b/equal? (b/of-seq [0xa5])))
+  ;; => true
+  (-> (b/of-seq [0xa5])
+      (unpack (bits [2 4 2]))
+      first)
+  ;; => [2 9 1]
+  )
 
 ;;;; str
 
