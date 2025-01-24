@@ -85,7 +85,7 @@
   "Wrap bytes-to-bytes struct by another struct."
   [st wrap-st]
   (-> st
-      (wrap #(pack % wrap-st) #(unpack % wrap-st))))
+      (wrap #(pack % wrap-st) #(unpack-one % wrap-st))))
 
 ;;;; coll-of
 
@@ -94,6 +94,11 @@
 
 (defmethod unpack :coll-of [b {:keys [struct]}]
   [(unpack-many b struct) (b/empty)])
+
+(defn coll-of
+  "Construct collection struct."
+  [struct]
+  {:type :coll-of :struct struct})
 
 ;;;; tuple
 
