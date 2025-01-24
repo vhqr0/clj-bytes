@@ -125,7 +125,7 @@
   "Construct keys struct."
   [& kvs]
   {:type :keys
-   :key-structs (->> kvs (partition 2))})
+   :key-structs (->> kvs (partition 2) (mapv vec))})
 
 ;;;; key-fns
 
@@ -150,7 +150,7 @@
   calculate by context when need."
   [& kvs]
   {:type :key-fns
-   :key-struct-fns (->> kvs (partition 2))})
+   :key-struct-fns (->> kvs (partition 2) (mapv vec))})
 
 ;;; primitives
 
