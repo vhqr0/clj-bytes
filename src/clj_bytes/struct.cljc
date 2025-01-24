@@ -66,11 +66,36 @@
    :unpack-fn unpack-fn
    :struct st})
 
+(defn validator
+  "Construct struct validator."
+  [valid-fn]
+  (fn [d]
+    (if (valid-fn d)
+      d
+      (throw-struct-error "struct validation error"))))
+
+(defn wrap-validator
+  "Wrap struct by validator."
+  [st valid-fn]
+  (let [validator (validator valid-fn)]
+    (-> st
+        (wrap validator validator))))
+
 (defn wrap-struct
   "Wrap bytes-to-bytes struct by another struct."
   [st wrap-st]
   (-> st
       (wrap #(pack % wrap-st) #(unpack % wrap-st))))
+
+;;;; coll-of
+
+(defmethod pack :coll-of [ds {:keys [struct]}]
+  (->> ds
+       (map #(pack % struct))
+       (apply b/concat!)))
+
+(defmethod unpack :coll-of [b {:keys [struct]}]
+  [(unpack-many b struct) (b/empty)])
 
 ;;;; tuple
 
@@ -303,7 +328,8 @@
   [st k->i]
   (let [i->k (->> k->i (map (fn [[k i]] [i k])) (into {}))]
     (-> st
-        (wrap k->i i->k))))
+        (wrap k->i i->k)
+        (wrap-validator #(contains? k->i %)))))
 
 ^:rct/test
 (comment
