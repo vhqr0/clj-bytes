@@ -293,6 +293,30 @@
 (def uint16-le (int :uint16-le))
 (def uint32-le (int :uint32-le))
 
+(defn reverse-map
+  "Reverse map."
+  [m]
+  (->> m (map (fn [[k v]] [v k])) (into {})))
+
+(defn enum
+  "Construct enum struct."
+  [st k->i]
+  (let [i->k (->> k->i (map (fn [[k i]] [i k])) (into {}))]
+    (-> st
+        (wrap k->i i->k))))
+
+^:rct/test
+(comment
+  (-> :b
+      (pack (enum uint8 {:a 1 :b 2 :c 3}))
+      (b/equal? (b/of-seq [2])))
+  ;; => true
+  (-> (b/of-seq [2])
+      (unpack (enum uint8 {:a 1 :b 2 :c 3}))
+      first)
+  ;; => :b
+  )
+
 ;;;; bits
 
 (defn bits-lengths->bytes-length
