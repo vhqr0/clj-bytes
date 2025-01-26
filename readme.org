@@ -44,6 +44,8 @@ and pure).
   (b/of-base64 "aGVsbG8=") ; make bytes from base64
 #+end_src
 
+A demo project that impl socks5 proxy server based on clj-bytes and aleph: [[https://github.com/vhqr0/clj-bytes-demo-socks5][clj-bytes-demo-socks5]].
+
 ** dev
 
 *** test
