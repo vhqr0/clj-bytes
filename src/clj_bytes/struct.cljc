@@ -118,7 +118,7 @@
   "Construct tuple struct."
   [& structs]
   {:type :tuple
-   :structs structs})
+   :structs (vec structs)})
 
 ^:rct/test
 (comment
@@ -321,11 +321,6 @@
 (def int64-le  (int :int64-le))
 (def uint16-le (int :uint16-le))
 (def uint32-le (int :uint32-le))
-
-(defn reverse-map
-  "Reverse map."
-  [m]
-  (->> m (map (fn [[k v]] [v k])) (into {})))
 
 (defn enum
   "Construct enum struct."
