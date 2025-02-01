@@ -84,7 +84,7 @@
   [b s e]
   (.slice b s e))
 
-(defn bytes-concat
+(defn bytes-join
   [bs]
   (let [os (->> bs (map bytes-count) (reductions +))
         na (js/Uint8Array. (last os))]
@@ -189,8 +189,8 @@
       (bytes-index-of h n s e))
     (-sub [_ b s e]
       (bytes-sub b s e))
-    (-concat [_ bs]
-      (bytes-concat bs))
+    (-join [_ bs]
+      (bytes-join bs))
     (-str [_ b encoding]
       (-> (js/TextDecoder. encoding) (.decode b)))
     (-of-str [_ s encoding]

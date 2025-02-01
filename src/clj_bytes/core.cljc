@@ -150,15 +150,17 @@
    (assert (<= 0 s e (count b)))
    (proto/-sub *impl* b s e)))
 
-(defn concat-of-seq
+(defn join
   "Return concatance of seq of bytes."
-  [bs]
-  (proto/-concat *impl* bs))
+  ([bs]
+   (proto/-join *impl* bs))
+  ([sep bs]
+   (join (interpose sep bs))))
 
 (defn concat
   "Return concatance of bytes."
   [& bs]
-  (concat-of-seq bs))
+  (join bs))
 
 (defn sub!
   "Impure version of `sub`, that means try to reuse input bytes,
@@ -172,20 +174,22 @@
        b
        (sub b s e)))))
 
-(defn concat-of-seq!
-  "Impure version of `concat-of-seq`, that means try to reuse input bytes,
+(defn join!
+  "Impure version of `join`, that means try to reuse input bytes,
   and caller have to make sure the input bytes are readonly."
-  [bs]
-  (let [bs (->> bs (remove empty?))]
-    (cond (clojure.core/empty? bs) (empty)
-          (clojure.core/empty? (rest bs)) (first bs)
-          :else (concat-of-seq bs))))
+  ([bs]
+   (let [bs (->> bs (remove empty?))]
+     (cond (clojure.core/empty? bs) (empty)
+           (clojure.core/empty? (rest bs)) (first bs)
+           :else (join bs))))
+  ([sep bs]
+   (join! (interpose sep bs))))
 
 (defn concat!
   "Impure version of `concat`, that means try to reuse input bytes,
   and caller have to make sure the input bytes are readonly."
   [& bs]
-  (concat-of-seq! bs))
+  (join! bs))
 
 (defn split-at!
   "Split bytes at n."

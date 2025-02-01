@@ -62,8 +62,8 @@
   [b s e]
   (Arrays/copyOfRange (bytes b) s e))
 
-(defn bytes-concat
-  "Concat seq of bytes."
+(defn bytes-join
+  "Join seq of bytes."
   [bs]
   (if (empty? bs)
     empty-bytes
@@ -238,8 +238,8 @@
       (bytes-index-of h n s e))
     (-sub [_ b s e]
       (bytes-sub b s e))
-    (-concat [_ bs]
-      (bytes-concat bs))
+    (-join [_ bs]
+      (bytes-join bs))
     (-str [_ b encoding]
       (String. (bytes b) ^String encoding))
     (-of-str [_ s encoding]

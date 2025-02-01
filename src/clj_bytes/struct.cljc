@@ -90,7 +90,7 @@
 ;;;; coll-of
 
 (defmethod pack :coll-of [ds {:keys [struct]}]
-  (->> ds (map #(pack % struct)) b/concat-of-seq!))
+  (->> ds (map #(pack % struct)) b/join!))
 
 (defmethod unpack :coll-of [b {:keys [struct]}]
   [(unpack-many b struct) (b/empty)])
@@ -105,7 +105,7 @@
 (defmethod pack :tuple [ds {:keys [structs]}]
   (if-not (= (count ds) (count structs))
     (throw-struct-error "must pack specified num of data")
-    (->> (map pack ds structs) b/concat-of-seq!)))
+    (->> (map pack ds structs) b/join!)))
 
 (defmethod unpack :tuple [b {:keys [structs]}]
   (loop [ds [] b b sts structs]
@@ -139,7 +139,7 @@
        (map
         (fn [[k st]]
           (pack (get m k) st)))
-       b/concat-of-seq!))
+       b/join!))
 
 (defmethod unpack :keys [b {:keys [key-structs]}]
   (loop [m {} b b ksts key-structs]
@@ -162,7 +162,7 @@
        (map
         (fn [[k st-fn]]
           (pack (get m k) (st-fn m))))
-       b/concat-of-seq!))
+       b/join!))
 
 (defmethod unpack :key-fns [b {:keys [key-struct-fns]}]
   (loop [m {} b b kstfns key-struct-fns]

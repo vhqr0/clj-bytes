@@ -23,7 +23,7 @@
   (-equal? [this b1 s1 e1 b2 s2 e2])
   (-index-of [this h n s e])
   (-sub [this b s e])
-  (-concat [this bs])
+  (-join [this bs])
   (-str [this b encoding])
   (-of-str [this s encoding])
   (-int [this b encoding])
