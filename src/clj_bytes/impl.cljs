@@ -1,74 +1,56 @@
 (ns clj-bytes.impl
   (:require [clj-bytes.protocols :as proto]))
 
-(def byte-class
-  "Static empty bytes."
-  js/ArrayBuffer)
+(def ^:private byte-class js/ArrayBuffer)
 
-(defn make-bytes
-  [n]
+(defn- make-bytes [n]
   (js/ArrayBuffer. n))
 
-(defn rand-bytes
-  [n]
+(defn- rand-bytes [n]
   (-> (js/Uint8Array. n) js/crypto.getRandomValues .-buffer))
 
-(defn bytes-count
-  [b]
+(defn- bytes-count [b]
   b.byteLength)
 
-(defn bytes-get
-  [b n]
+(defn- bytes-get [b n]
   (aget (js/Int8Array. b) n))
 
-(defn bytes-set!
-  [b n i]
+(defn- bytes-set! [b n i]
   (aset (js/Int8Array. b) n i))
 
-(defn bytes-fill!
-  [b i]
+(defn- bytes-fill! [b i]
   (.fill (js/Int8Array. b) i))
 
-(defn bytes->seq
-  [b]
+(defn- bytes->seq [b]
   (array-seq (js/Int8Array. b)))
 
-(defn seq->bytes
-  [s]
+(defn- seq->bytes [s]
   (.-buffer (js/Int8Array.from s)))
 
-(defn bytes-uget
-  [b n]
+(defn- bytes-uget [b n]
   (aget (js/Uint8Array. b) n))
 
-(defn bytes-uset!
-  [b n i]
+(defn- bytes-uset! [b n i]
   (aset (js/Uint8Array. b) n i))
 
-(defn bytes-ufill!
-  [b i]
+(defn- bytes-ufill! [b i]
   (.fill (js/Uint8Array. b) i))
 
-(defn bytes->useq
-  [b]
+(defn- bytes->useq [b]
   (array-seq (js/Uint8Array. b)))
 
-(defn useq->bytes
-  [s]
+(defn- useq->bytes [s]
   (.-buffer (js/Uint8Array.from s)))
 
-(defn- array-equal?
-  [a1 s1 a2 s2 n]
+(defn- array-equal? [a1 s1 a2 s2 n]
   (->> (range n) (every? #(= (aget a1 (+ s1 %)) (aget a2 (+ s2 %))))))
 
-(defn bytes-equal?
-  [b1 s1 e1 b2 s2 e2]
+(defn- bytes-equal? [b1 s1 e1 b2 s2 e2]
   (let [c1 (- e1 s1)
         c2 (- e2 s2)]
     (and (= c1 c2) (array-equal? (js/Uint8Array. b1) s1 (js/Uint8Array. b2) s2 c1))))
 
-(defn bytes-index-of
-  [h n s e]
+(defn- bytes-index-of [h n s e]
   (let [c n.byteLength
         e (- e c)
         ha (js/Uint8Array. h)
@@ -80,45 +62,41 @@
           s
           (recur (inc s)))))))
 
-(defn bytes-sub
-  [b s e]
+(defn- bytes-sub [b s e]
   (.slice b s e))
 
-(defn bytes-join
-  [bs]
+(defn- bytes-join [bs]
   (let [os (->> bs (map bytes-count) (reductions +))
         na (js/Uint8Array. (last os))]
     (doseq [[o b] (map vector (cons 0 (butlast os)) bs)]
       (.set na (js/Uint8Array. b) o))
     na.buffer))
 
-(def int8->bytes  (fn [i] (.-buffer (js/Int8Array.of i))))
-(def uint8->bytes (fn [i] (.-buffer (js/Uint8Array.of i))))
+(def ^:private int8->bytes  (fn [i] (.-buffer (js/Int8Array.of i))))
+(def ^:private uint8->bytes (fn [i] (.-buffer (js/Uint8Array.of i))))
 
-(def int16-be->bytes  (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setInt16 0 i false)) b)))
-(def int32-be->bytes  (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setInt32 0 i false)) b)))
-(def uint16-be->bytes (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setUint16 0 i false)) b)))
-(def uint32-be->bytes (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setUint32 0 i false)) b)))
-(def int16-le->bytes  (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setInt16 0 i true)) b)))
-(def int32-le->bytes  (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setInt32 0 i true)) b)))
-(def uint16-le->bytes (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setUint16 0 i true)) b)))
-(def uint32-le->bytes (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setUint32 0 i true)) b)))
+(def ^:private int16-be->bytes  (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setInt16 0 i false)) b)))
+(def ^:private int32-be->bytes  (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setInt32 0 i false)) b)))
+(def ^:private uint16-be->bytes (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setUint16 0 i false)) b)))
+(def ^:private uint32-be->bytes (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setUint32 0 i false)) b)))
+(def ^:private int16-le->bytes  (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setInt16 0 i true)) b)))
+(def ^:private int32-le->bytes  (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setInt32 0 i true)) b)))
+(def ^:private uint16-le->bytes (fn [i] (let [b (js/ArrayBuffer. 2)] (-> (js/DataView. b) (.setUint16 0 i true)) b)))
+(def ^:private uint32-le->bytes (fn [i] (let [b (js/ArrayBuffer. 4)] (-> (js/DataView. b) (.setUint32 0 i true)) b)))
 
-(def bytes->int8  (fn [b] (assert (= b.byteLength 1)) (aget (js/Int8Array. b) 0)))
-(def bytes->uint8 (fn [b] (assert (= b.byteLength 1)) (aget (js/Uint8Array. b) 0)))
+(def ^:private bytes->int8  (fn [b] {:pre [(= b.byteLength 1)]} (aget (js/Int8Array. b) 0)))
+(def ^:private bytes->uint8 (fn [b] {:pre [(= b.byteLength 1)]} (aget (js/Uint8Array. b) 0)))
 
-(def bytes->int16-be  (fn [b] (assert (= b.byteLength 2)) (-> (js/DataView. b) (.getInt16 0 false))))
-(def bytes->int32-be  (fn [b] (assert (= b.byteLength 4)) (-> (js/DataView. b) (.getInt32 0 false))))
-(def bytes->uint16-be (fn [b] (assert (= b.byteLength 2)) (-> (js/DataView. b) (.getUint16 0 false))))
-(def bytes->uint32-be (fn [b] (assert (= b.byteLength 4)) (-> (js/DataView. b) (.getUint32 0 false))))
-(def bytes->int16-le  (fn [b] (assert (= b.byteLength 2)) (-> (js/DataView. b) (.getInt16 0 true))))
-(def bytes->int32-le  (fn [b] (assert (= b.byteLength 4)) (-> (js/DataView. b) (.getInt32 0 true))))
-(def bytes->uint16-le (fn [b] (assert (= b.byteLength 2)) (-> (js/DataView. b) (.getUint16 0 true))))
-(def bytes->uint32-le (fn [b] (assert (= b.byteLength 4)) (-> (js/DataView. b) (.getUint32 0 true))))
+(def ^:private bytes->int16-be  (fn [b] {:pre [(= b.byteLength 2)]} (-> (js/DataView. b) (.getInt16 0 false))))
+(def ^:private bytes->int32-be  (fn [b] {:pre [(= b.byteLength 4)]} (-> (js/DataView. b) (.getInt32 0 false))))
+(def ^:private bytes->uint16-be (fn [b] {:pre [(= b.byteLength 2)]} (-> (js/DataView. b) (.getUint16 0 false))))
+(def ^:private bytes->uint32-be (fn [b] {:pre [(= b.byteLength 4)]} (-> (js/DataView. b) (.getUint32 0 false))))
+(def ^:private bytes->int16-le  (fn [b] {:pre [(= b.byteLength 2)]} (-> (js/DataView. b) (.getInt16 0 true))))
+(def ^:private bytes->int32-le  (fn [b] {:pre [(= b.byteLength 4)]} (-> (js/DataView. b) (.getInt32 0 true))))
+(def ^:private bytes->uint16-le (fn [b] {:pre [(= b.byteLength 2)]} (-> (js/DataView. b) (.getUint16 0 true))))
+(def ^:private bytes->uint32-le (fn [b] {:pre [(= b.byteLength 4)]} (-> (js/DataView. b) (.getUint32 0 true))))
 
-(defn int->bytes
-  "Convert int to bytes."
-  [i encoding]
+(defn- int->bytes [i encoding]
   (case encoding
     :int8      (int8->bytes      i)
     :uint8     (uint8->bytes     i)
@@ -131,9 +109,7 @@
     :uint16-le (uint16-le->bytes i)
     :uint32-le (uint32-le->bytes i)))
 
-(defn bytes->int
-  "Convert bytes to int."
-  [b encoding]
+(defn- bytes->int [b encoding]
   (case encoding
     :int8      (bytes->int8      b)
     :uint8     (bytes->uint8     b)

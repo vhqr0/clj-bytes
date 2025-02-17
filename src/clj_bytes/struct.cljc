@@ -344,21 +344,17 @@
 
 ;;;; bits
 
-(defn bits-lengths->bytes-length
-  "Mapping from bits lengths to bytes length."
-  [cs]
-  (let [c (->> cs (reduce +))]
-    (assert (zero? (mod c 8)))
-    (bit-shift-right c 3)))
+(defn- bits-length->int-length [c]
+  {:pre [(zero? (mod c 8))]}
+  (bit-shift-right c 3))
 
-(defn bits-lengths->int-offsets
-  "Mapping from bits lengths to int offsets."
-  [cs]
+(defn- bits-lengths->bytes-length [cs]
+  (->> cs (reduce +) bits-length->int-length))
+
+(defn- bits-lengths->int-offsets [cs]
   (->> cs reverse (reductions + 0) butlast reverse vec))
 
-(defn bits-lengths->int-masks
-  "Mapping from bits lengths to int masks."
-  [cs]
+(defn- bits-lengths->int-masks [cs]
   (->> cs (mapv #(dec (bit-shift-left 1 %)))))
 
 ^:rct/test

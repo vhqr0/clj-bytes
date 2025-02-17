@@ -21,11 +21,13 @@
 (defn make
   "Return a bytes with length of n."
   [n]
+  {:pre [(int? n)]}
   (proto/-make *impl* n))
 
 (defn rand
   "Return a random bytes with length of n."
   [n]
+  {:pre [(int? n)]}
   (proto/-rand *impl* n))
 
 (defn empty
@@ -36,11 +38,13 @@
 (defn empty?
   "Pred whether bytes is empty."
   [b]
+  {:pre [(instance? b)]}
   (proto/-empty? *impl* b))
 
 (defn count
   "Return length of bytes."
   [b]
+  {:pre [(instance? b)]}
   (proto/-count *impl* b))
 
 ^:rct/test
@@ -57,55 +61,65 @@
 (defn get
   "Return nth byte of bytes."
   [b n]
+  {:pre [(instance? b) (int? n)]}
   (proto/-get *impl* b n))
 
 (defn set!
   "Set nth byte of bytes."
   [b n i]
+  {:pre [(instance? b) (int? n) (int? i)]}
   (proto/-set! *impl* b n i)
   b)
 
 (defn fill!
   "Fill bytes."
   [b i]
+  {:pre [(instance? b) (int? i)]}
   (proto/-fill! *impl* b i)
   b)
 
 (defn seq
   "Return seq of bytes."
   [b]
+  {:pre [(instance? b)]}
   (proto/-seq *impl* b))
 
 (defn of-seq
   "Return a bytes from seq of bytes."
   [s]
+  {:post [(instance? %)]}
   (proto/-of-seq *impl* s))
 
 (defn uget
   "Unsigned version of `get`."
   [b n]
+  {:pre [(instance? b) (int? n)]}
   (proto/-uget *impl* b n))
 
 (defn uset!
   "Unsigned version of `set!`."
   [b n i]
+  {:pre [(instance? b) (int? n) (int? i)]}
   (proto/-uset! *impl* b n i)
   b)
 
 (defn ufill!
   "Unsigned version of `fill!`."
   [b i]
+  {:pre [(instance? b) (int? i)]}
   (proto/-ufill! *impl* b i)
   b)
 
 (defn useq
   "Unsigned version of `seq`."
   [b]
+  {:pre [(instance? b)]}
   (proto/-useq *impl* b))
 
 (defn of-useq
   "Unsigned version of `of-seq`."
   [s]
+  {:post [(instance? %)]}
   (proto/-of-useq *impl* s))
 
 ^:rct/test
@@ -122,7 +136,7 @@
   ([b1 b2]
    (equal? b1 0 (count b1) b2 0 (count b2)))
   ([b1 s1 e1 b2 s2 e2]
-   (assert (and (<= 0 s1 e1 (count b1)) (<= 0 s2 e2 (count b2))))
+   {:pre [(<= 0 s1 e1 (count b1)) (<= 0 s2 e2 (count b2))]}
    (proto/-equal? *impl* b1 s1 e1 b2 s2 e2)))
 
 (defn index-of
@@ -130,7 +144,7 @@
   ([h n]
    (index-of h n 0 (count h)))
   ([h n s e]
-   (assert (<= 0 s e (count h)))
+   {:pre [(<= 0 s e (count h)) (instance? n)]}
    (proto/-index-of *impl* h n s e)))
 
 ^:rct/test
@@ -147,7 +161,7 @@
   ([b]
    (sub b 0 (count b)))
   ([b s e]
-   (assert (<= 0 s e (count b)))
+   {:pre [(<= 0 s e (count b))]}
    (proto/-sub *impl* b s e)))
 
 (defn join
@@ -215,6 +229,8 @@
   ([b]
    (str b nil))
   ([b encoding]
+   {:pre [(instance? b)]
+    :post [(string? %)]}
    (let [encoding (or encoding "utf-8")]
      (proto/-str *impl* b encoding))))
 
@@ -223,6 +239,8 @@
   ([s]
    (of-str s nil))
   ([s encoding]
+   {:pre [(string? s)]
+    :post [(instance? %)]}
    (let [encoding (or encoding "utf-8")]
      (proto/-of-str *impl* s encoding))))
 
@@ -235,11 +253,15 @@
 (defn int
   "Decode integer."
   [b encoding]
+  {:pre [(instance? b)]
+   :post [(int? %)]}
   (proto/-int *impl* b encoding))
 
 (defn of-int
   "Encode integer."
   [i encoding]
+  {:pre [(int? i)]
+   :post [(instance? %)]}
   (proto/-of-int *impl* i encoding))
 
 ^:rct/test
@@ -254,6 +276,8 @@
   ([b]
    (hex b :lower))
   ([b alphabet]
+   {:pre [(instance? b)]
+    :post [(string? %)]}
    (->> b useq (codec/ints->hex alphabet))))
 
 (defn of-hex
@@ -261,6 +285,8 @@
   ([s]
    (of-hex s :lower))
   ([s alphabet]
+   {:pre [(string? s)]
+    :post [(instance? %)]}
    (-> s (codec/hex->ints alphabet) of-useq)))
 
 ^:rct/test
@@ -276,6 +302,8 @@
   ([b]
    (base64 b :mime))
   ([b alphabet]
+   {:pre [(instance? b)]
+    :post [(string? %)]}
    (->> b useq (codec/ints->base64 alphabet))))
 
 (defn of-base64
@@ -283,6 +311,8 @@
   ([s]
    (of-base64 s :mime))
   ([s alphabet]
+   {:pre [(string? s)]
+    :post [(instance? %)]}
    (-> s (codec/base64->ints alphabet) of-useq)))
 
 ^:rct/test

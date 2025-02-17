@@ -5,80 +5,59 @@
            java.util.Random
            java.security.SecureRandom))
 
-(def empty-bytes
-  "Static empty bytes."
-  (byte-array 0))
-
-(def bytes-class
-  "Class of bytes."
-  (type empty-bytes))
+(def ^:private empty-bytes (byte-array 0))
+(def ^:private bytes-class (type empty-bytes))
 
 (def ^:dynamic ^Random *random*
   "Internal random object."
   (SecureRandom.))
 
-(defn rand-bytes
-  "Generate random n bytes."
-  [n]
-  (let [b (byte-array n)] (.nextBytes *random* b) b))
+(defn- rand-bytes [n]
+  (let [b (byte-array (long n))]
+    (.nextBytes *random* b) b))
 
-(defn byte->uint
-  "Convert byte to unsigned int."
-  [i]
-  (bit-and 0xff i))
+(defn- byte->uint [i] (bit-and 0xff i))
+(defn- uint->byte [i] (unchecked-byte i))
 
-(defn uint->byte
-  "Convert unsigned int to byte."
-  [i]
-  (unchecked-byte i))
-
-(defn bytes-fill!
-  "Fill bytes."
-  [b i]
+(defn- bytes-fill! [b i]
   (Arrays/fill (bytes b) (byte i)))
 
-(defn bytes-equal?
-  "Pred whether two bytes are equal."
-  [b1 s1 e1 b2 s2 e2]
-  (Arrays/equals b1 s1 e1 b2 s2 e2))
+(defn- bytes-equal? [b1 s1 e1 b2 s2 e2]
+  (Arrays/equals
+   (bytes b1) (long s1) (long e1)
+   (bytes b2) (long s2) (long e2)))
 
-(defn bytes-index-of
-  "Find needle in haystack."
-  [b n s e]
+(defn- bytes-index-of [b n s e]
   (let [b (bytes b)
         n (bytes n)
-        c (long (alength n))
+        c (alength n)
         s (long s)
         e (long (- e c))]
     (loop [s s]
       (if (> s e)
         -1
-        (if (Arrays/equals b s (+ s c) n 0 c)
+        (if (Arrays/equals b s (unchecked-add-int s c) n 0 c)
           s
-          (recur (inc s)))))))
+          (recur (unchecked-inc s)))))))
 
-(defn bytes-sub
-  "Return sub-bytes of bytes."
-  [b s e]
-  (Arrays/copyOfRange (bytes b) s e))
+(defn- bytes-sub [b s e]
+  (Arrays/copyOfRange (bytes b) (long s) (long e)))
 
-(defn bytes-join
-  "Join seq of bytes."
-  [bs]
+(defn- bytes-join [bs]
   (if (empty? bs)
     empty-bytes
     (let [os (->> bs (map alength) (reductions +))
           nb (Arrays/copyOf (bytes (first bs)) (last os))]
       (doseq [[o b] (map vector (butlast os) (rest bs))]
-        (System/arraycopy b 0 nb o (alength b)))
+        (let [b (bytes b)
+              o (long o)]
+          (System/arraycopy b 0 nb o (alength b))))
       nb)))
 
-(defn- bytes-reverse
-  "Reverse bytes."
-  [b]
+(defn- bytes-reverse [b]
   (->> b reverse byte-array))
 
-(defmacro define-from-int-convertor
+(defmacro ^:private define-from-int-convertor
   {:doc "Construct -from-int convertor function."
    :clj-kondo/lint-as 'clojure.core/def}
   [name length byte-buffer-setter]
@@ -88,7 +67,7 @@
        (-> ~'b ByteBuffer/wrap (~byte-buffer-setter ~'i))
        ~'b)))
 
-(defmacro define-from-uint-convertor
+(defmacro ^:private define-from-uint-convertor
   {:doc "Construct -from-uint convertor function."
    :clj-kondo/lint-as 'clojure.core/def}
   [name from-int-convertor unchecked-cast]
@@ -110,7 +89,7 @@
   [name length byte-buffer-getter]
   `(defn- ~name
      [^bytes ~'b]
-     (assert (= (alength ~'b) ~length))
+     {:pre [(= (alength ~'b) ~length)]}
      (~byte-buffer-getter (ByteBuffer/wrap ~'b))))
 
 (defmacro define-to-uint-convertor
@@ -145,7 +124,7 @@
 (define-from-int-le-convertor uint16-le->bytes uint16->bytes)
 (define-from-int-le-convertor uint32-le->bytes uint32->bytes)
 
-(defn- bytes->int8 [^bytes b] (assert (= (alength b) 1)) (aget b 0))
+(defn- bytes->int8 [^bytes b] {:pre [(= (alength b) 1)]} (aget b 0))
 
 (define-to-int-convertor bytes->int16 2 .getShort)
 (define-to-int-convertor bytes->int32 4 .getInt)
@@ -161,9 +140,7 @@
 (define-to-int-le-convertor bytes->uint16-le bytes->uint16)
 (define-to-int-le-convertor bytes->uint32-le bytes->uint32)
 
-(defn int->bytes
-  "Convert int to bytes."
-  [i encoding]
+(defn- int->bytes [i encoding]
   (case encoding
     :int8      (int8->bytes      i)
     :uint8     (uint8->bytes     i)
@@ -178,9 +155,7 @@
     :uint16-le (uint16-le->bytes i)
     :uint32-le (uint32-le->bytes i)))
 
-(defn bytes->int
-  "Convert bytes to int."
-  [b encoding]
+(defn- bytes->int [b encoding]
   (case encoding
     :int8      (bytes->int8      b)
     :uint8     (bytes->uint8     b)
@@ -213,19 +188,19 @@
     (-count [_ b]
       (alength (bytes b)))
     (-get [_ b n]
-      (aget (bytes b) n))
+      (aget (bytes b) (long n)))
     (-set! [_ b n i]
-      (aset-byte (bytes b) n i))
+      (aset-byte (bytes b) (long n) (byte i)))
     (-fill! [_ b i]
       (bytes-fill! b i))
     (-seq [_ b]
-      (seq b))
+      (seq (bytes b)))
     (-of-seq [_ s]
       (byte-array (seq s)))
     (-uget [_ b n]
-      (-> (aget (bytes b) n) byte->uint))
+      (-> (aget (bytes b) (long n)) byte->uint))
     (-uset! [_ b n i]
-      (aset-byte (bytes b) n (uint->byte i)))
+      (aset-byte (bytes b) (long n) (uint->byte i)))
     (-ufill! [_ b i]
       (bytes-fill! b (uint->byte i)))
     (-useq [_ b]

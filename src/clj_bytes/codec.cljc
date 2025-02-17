@@ -3,8 +3,8 @@
 
 ;;; utils
 
-(defn reverse-alphabet-1
-  "Reverse a single alphabet."
+(defn- reverse-alphabet-1
+  "Reverse a single alphabet, from int->char to char->int."
   [v]
   (->> v (map-indexed #(vector %2 %1)) (into {})))
 
@@ -13,8 +13,8 @@
   (reverse-alphabet-1 [\a \b \c]) ; => {\a 0 \b 1 \c 2}
   )
 
-(defn reverse-alphabet
-  "Reverse alphabet."
+(defn- reverse-alphabet
+  "Reverse alphabet, mapping from keyword to single alphabet."
   [m]
   (->> m (map #(update % 1 reverse-alphabet-1)) (into {})))
 
@@ -26,13 +26,11 @@
 
 ;;; hex
 
-(def int->hex-char
-  "Hex int->char alphabet."
+(def ^:private int->hex-char
   {:lower (vec "0123456789abcdef")
    :upper (vec "0123456789ABCDEF")})
 
-(def hex-char->int
-  "Hex char->int alphabet."
+(def ^:private hex-char->int
   (reverse-alphabet int->hex-char))
 
 (defn- int->hex-chars-part
@@ -41,44 +39,46 @@
 
 (defn- hex-chars-part->int
   [chars char->int]
-  (assert (= (count chars) 2))
+  {:pre [(= (count chars) 2)]}
   (let [[i1 i2] (map char->int chars)]
     (+ (bit-shift-left i1 4) i2)))
 
-(defn ints->hex-chars
-  "Convert seq of ints to seq of hex chars."
+(defn- ints->hex-chars
   [int->char ints]
   (->> ints (mapcat #(int->hex-chars-part % int->char))))
 
-(defn hex-chars->ints
-  "Convert seq of hex chars to seq of ints."
+(defn- hex-chars->ints
   [char->int chars]
   (->> chars (partition-all 2) (map #(hex-chars-part->int % char->int))))
 
+(defn- ints->hex-str
+  [int->char ints]
+  {:pre [(some? int->char)]}
+  (->> ints (ints->hex-chars int->char) str/join))
+
+(defn- hex-str->ints
+  [s char->int]
+  {:pre [(some? char->int)]}
+  (->> (seq s) (hex-chars->ints char->int)))
+
 (defn ints->hex
-  "Convert seq of ints to hex str."
+  "Convert ints to hex."
   [alphabet ints]
-  (let [int->char (int->hex-char alphabet)]
-    (assert (some? int->char))
-    (->> ints (ints->hex-chars int->char) str/join)))
+  (->> ints (ints->hex-str (get int->hex-char alphabet))))
 
 (defn hex->ints
-  "Convert hex str to seq of ints."
+  "Convert hex to ints."
   [s alphabet]
-  (let [char->int (hex-char->int alphabet)]
-    (assert (some? char->int))
-    (->> (seq s) (hex-chars->ints char->int))))
+  (-> s (hex-str->ints (get hex-char->int alphabet))))
 
 ;;; base64
 ;; https://zh.wikipedia.org/zh-cn/Base64
 
-(def int->base64-char
-  "Base64 int->char alphabet."
+(def ^:private int->base64-char
   {:mime (vec "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
    :url  (vec "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")})
 
-(def base64-char->int
-  "Base64 char->int alphabet."
+(def ^:private base64-char->int
   (reverse-alphabet int->base64-char))
 
 (defn- ints-part->base64-chars-part-3
@@ -130,45 +130,51 @@
 
 (defn- base64-chars-part->ints-part
   [chars char->int]
-  (assert (= (count chars) 4))
+  {:pre [(= (count chars) 4)]}
   (let [ints (->> chars (take-while #(not= % \=)) (map char->int))]
     (case (count ints)
       2 [true (base64-chars-part->ints-part-2 ints)]
       3 [true (base64-chars-part->ints-part-3 ints)]
       4 [false (base64-chars-part->ints-part-4 ints)])))
 
-(defn ints->base64-chars
-  "Convert seq of ints to seq of base64 chars."
-  [int->char ints]
-  (lazy-seq
-   (when (seq ints)
-     (let [[ints-part ints] (split-at 3 ints)
-           [end? chars] (ints-part->base64-chars-part ints-part int->char)]
-       (when end?
-         (assert (empty? ints)))
-       (concat chars (ints->base64-chars int->char ints))))))
+(defn- ints->base64-chars
+  ([int->char ints]
+   (ints->base64-chars int->char ints false))
+  ([int->char ints end?]
+   {:pre [(not (and end? (seq ints)))]}
+   (lazy-seq
+    (when (seq ints)
+      (let [[ints-part ints] (split-at 3 ints)
+            [end? chars] (ints-part->base64-chars-part ints-part int->char)]
+        (concat chars (ints->base64-chars int->char ints end?)))))))
 
-(defn base64-chars->ints
-  "Convert seq of base64 chars to seq of ints."
-  [char->int chars]
-  (lazy-seq
-   (when (seq chars)
-     (let [[chars-part chars] (split-at 4 chars)
-           [end? ints] (base64-chars-part->ints-part chars-part char->int)]
-       (when end?
-         (assert (empty? chars)))
-       (concat ints (base64-chars->ints char->int chars))))))
+(defn- base64-chars->ints
+  ([char->int chars]
+   (base64-chars->ints char->int chars false))
+  ([char->int chars end?]
+   {:pre [(not (and end? (seq chars)))]}
+   (lazy-seq
+    (when (seq chars)
+      (let [[chars-part chars] (split-at 4 chars)
+            [end? ints] (base64-chars-part->ints-part chars-part char->int)]
+        (concat ints (base64-chars->ints char->int chars end?)))))))
+
+(defn- ints->base64-str
+  [int->char ints]
+  {:pre [(some? int->char)]}
+  (->> ints (ints->base64-chars int->char) str/join))
+
+(defn- base64-str->ints
+  [s char->int]
+  {:pre [(some? char->int)]}
+  (->> (seq s) (base64-chars->ints char->int)))
 
 (defn ints->base64
-  "Convert seq of ints to base64 str."
+  "Convert ints to base64."
   [alphabet ints]
-  (let [int->char (int->base64-char alphabet)]
-    (assert (some? int->char))
-    (->> ints (ints->base64-chars int->char) str/join)))
+  (->> ints (ints->base64-str (get int->base64-char alphabet))))
 
 (defn base64->ints
-  "Convert base64 str to seq of ints."
+  "Convert base64 to ints."
   [s alphabet]
-  (let [char->int (base64-char->int alphabet)]
-    (assert (some? char->int))
-    (->> (seq s) (base64-chars->ints char->int))))
+  (-> s (base64-str->ints (get base64-char->int alphabet))))
