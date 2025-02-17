@@ -170,7 +170,7 @@
     (-str [_ b encoding]
       (-> (js/TextDecoder. encoding) (.decode b)))
     (-of-str [_ s encoding]
-      (-> (js/TextEncoder. encoding) (.encode s)))
+      (-> (js/TextEncoder. encoding) (.encode s) (.-buffer)))
     (-int [_ b encoding]
       (bytes->int b encoding))
     (-of-int [_ i encoding]
