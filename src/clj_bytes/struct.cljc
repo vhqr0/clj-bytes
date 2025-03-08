@@ -220,10 +220,11 @@
   (b/concat d delimiter))
 
 (defmethod unpack :bytes-delimited [b {:keys [delimiter]}]
-  (when-let [i (b/index-of b delimiter)]
-    (let [d (b/sub! b 0 i)
-          b (b/sub! b (+ i (b/count delimiter)) (b/count b))]
-      [d b])))
+  (let [i (b/index-of b delimiter)]
+    (when (nat-int? i)
+      (let [d (b/sub! b 0 i)
+            b (b/sub! b (+ i (b/count delimiter)) (b/count b))]
+        [d b]))))
 
 (defn bytes-delimited
   "Construct delimiterd bytes struct."
