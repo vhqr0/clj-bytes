@@ -1,4 +1,4 @@
-(ns clj-bytes.core-test
+(ns clj-bytes.rct-test
   (:require [clojure.test :refer [deftest]]
             [com.mjdowney.rich-comment-tests.test-runner :as test-runner]))
 
