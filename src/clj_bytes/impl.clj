@@ -47,7 +47,7 @@
   (if (empty? bs)
     empty-bytes
     (let [os (->> bs (map alength) (reductions +))
-          nb (Arrays/copyOf (bytes (first bs)) (last os))]
+          nb (Arrays/copyOf (bytes (first bs)) (long (last os)))]
       (doseq [[o b] (map vector (butlast os) (rest bs))]
         (let [b (bytes b)
               o (long o)]
@@ -62,9 +62,9 @@
    :clj-kondo/lint-as 'clojure.core/def}
   [name length byte-buffer-setter]
   `(defn- ~name
-     [^long ~'i]
+     [~'i]
      (let [~'b (byte-array ~length)]
-       (-> ~'b ByteBuffer/wrap (~byte-buffer-setter ~'i))
+       (-> ~'b ByteBuffer/wrap (~byte-buffer-setter (long ~'i)))
        ~'b)))
 
 (defmacro ^:private define-from-uint-convertor
@@ -72,24 +72,24 @@
    :clj-kondo/lint-as 'clojure.core/def}
   [name from-int-convertor unchecked-cast]
   `(defn- ~name
-     [^long ~'i]
-     (-> ~'i ~unchecked-cast ~from-int-convertor)))
+     [~'i]
+     (-> (long ~'i) ~unchecked-cast ~from-int-convertor)))
 
 (defmacro define-from-int-le-convertor
   {:doc "Construct -from-int-le convertor function."
    :clj-kondo/lint-as 'clojure.core/def}
   [name from-int-convertor]
   `(defn- ~name
-     [^long ~'i]
-     (-> ~'i ~from-int-convertor bytes-reverse)))
+     [~'i]
+     (-> (long ~'i) ~from-int-convertor bytes-reverse)))
 
 (defmacro define-to-int-convertor
   {:doc "Construct -to-int convert function."
    :clj-kondo/lint-as 'clojure.core/def}
   [name length byte-buffer-getter]
   `(defn- ~name
-     [^bytes ~'b]
-     {:pre [(= (alength ~'b) ~length)]}
+     [~'b]
+     {:pre [(= (alength (bytes ~'b)) ~length)]}
      (~byte-buffer-getter (ByteBuffer/wrap ~'b))))
 
 (defmacro define-to-uint-convertor
@@ -97,16 +97,16 @@
    :clj-kondo/lint-as 'clojure.core/def}
   [name to-int-convertor bit-mask]
   `(defn- ~name
-     [^bytes ~'b]
-     (-> (~to-int-convertor ~'b) (bit-and ~bit-mask))))
+     [~'b]
+     (-> (~to-int-convertor (bytes ~'b)) (bit-and ~bit-mask))))
 
 (defmacro define-to-int-le-convertor
   {:doc "Construct to-int-le convert function."
    :clj-kondo/lint-as 'clojure.core/def}
   [name to-int-convertor]
   `(defn- ~name
-     [^bytes ~'b]
-     (-> ~'b bytes-reverse ~to-int-convertor)))
+     [~'b]
+     (-> (bytes ~'b) bytes-reverse ~to-int-convertor)))
 
 (defn- int8->bytes [i] (let [b (byte-array 1)] (-> b (aset-byte 0 i)) b))
 
@@ -184,7 +184,7 @@
     (-empty [_]
       empty-bytes)
     (-empty? [_ b]
-      (zero? (alength b)))
+      (zero? (alength (bytes b))))
     (-count [_ b]
       (alength (bytes b)))
     (-get [_ b n]
