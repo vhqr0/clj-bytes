@@ -140,7 +140,7 @@
    (proto/-equal? *impl* b1 s1 e1 b2 s2 e2)))
 
 (defn index-of
-  "Find needle in haystack, return index of needle, or -1 if not found."
+  "Find needle in haystack, return index of needle, or nil if not found."
   ([h n]
    (index-of h n 0 (count h)))
   ([h n s e]
@@ -153,7 +153,7 @@
   (equal? (empty) (make 1)) ; => false
   (index-of (of-seq [1 2 3 4 5]) (of-seq [3 4])) ; => 2
   (index-of (of-seq [1 2 3 4 5]) (of-seq [4])) ; => 3
-  (index-of (of-seq [1 2 3 4 5]) (of-seq [4 3])) ; => -1
+  (index-of (of-seq [1 2 3 4 5]) (of-seq [4 3])) ; => nil
   )
 
 (defn sub

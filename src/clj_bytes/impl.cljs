@@ -56,8 +56,7 @@
         ha (js/Uint8Array. h)
         na (js/Uint8Array. n)]
     (loop [s s]
-      (if (> s e)
-        -1
+      (when (<= s e)
         (if (array-equal? ha s na 0 c)
           s
           (recur (inc s)))))))

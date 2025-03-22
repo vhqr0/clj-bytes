@@ -34,8 +34,7 @@
         s (long s)
         e (long (- e c))]
     (loop [s s]
-      (if (> s e)
-        -1
+      (when (<= s e)
         (if (Arrays/equals b s (unchecked-add-int s c) n 0 c)
           s
           (recur (unchecked-inc s)))))))
