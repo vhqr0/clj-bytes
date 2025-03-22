@@ -180,6 +180,45 @@
   {:type :key-fns
    :key-struct-fns (->> kvs (partition 2) (mapv vec))})
 
+;;;; vec-destructs
+
+(defn vec-destruct-pack
+  "Vec destruct pack in map."
+  [m [vk ks]]
+  (assoc m vk (->> ks (mapv (partial get m)))))
+
+(defn vec-destruct-unpack
+  "Vec destruct unpack in map."
+  [m [vk ks]]
+  (merge m (zipmap ks (get m vk))))
+
+^:rct/test
+(comment
+  (vec-destruct-pack {:a 1 :b 2} [:a-b [:a :b]]) ; => {:a 1 :b 2 :a-b [1 2]}
+  (vec-destruct-unpack {:a-b [1 2]} [:a-b [:a :b]]) ; => {:a 1 :b 2 :a-b [1 2]}
+  )
+
+(defn wrap-vec-destructs
+  "Wrap vec destructs around keys struct."
+  [st dests]
+  (-> st
+      (wrap
+       (fn [m]
+         (->> dests (reduce vec-destruct-pack m)))
+       (fn [m]
+         (->> dests (reduce vec-destruct-unpack m))))))
+
+^:rct/test
+(comment
+  (-> {:a 4 :b 5}
+      (pack (-> (keys :a-b (bits [4 4])) (wrap-vec-destructs {:a-b [:a :b]})))
+      b/useq)
+  ;; => [69]
+  (-> (b/of-useq [69])
+      (unpack-one (-> (keys :a-b (bits [4 4])) (wrap-vec-destructs {:a-b [:a :b]}))))
+  ;; => {:a-b [4 5] :a 4 :b 5}
+  )
+
 ;;; primitives
 
 ;;;; bytes
