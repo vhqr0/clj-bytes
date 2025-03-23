@@ -87,19 +87,6 @@
   (-> st
       (wrap #(pack % wrap-st) #(unpack-one % wrap-st))))
 
-;;;; coll-of
-
-(defmethod pack :coll-of [ds {:keys [struct]}]
-  (->> ds (map #(pack % struct)) b/join!))
-
-(defmethod unpack :coll-of [b {:keys [struct]}]
-  [(unpack-many b struct) (b/empty)])
-
-(defn coll-of
-  "Construct collection struct."
-  [struct]
-  {:type :coll-of :struct struct})
-
 ;;;; tuple
 
 (defmethod pack :tuple [ds {:keys [structs]}]
@@ -130,6 +117,35 @@
       (unpack (tuple uint8 uint16-be uint8))
       first)
   ;; => [0x1 0x3456 0x4]
+  )
+
+;;;; coll-of
+
+(defmethod pack :coll-of [ds {:keys [struct]}]
+  (->> ds (map #(pack % struct)) b/join!))
+
+(defmethod unpack :coll-of [b {:keys [struct]}]
+  [(unpack-many b struct) (b/empty)])
+
+(defn coll-of
+  "Construct collection struct."
+  [struct]
+  {:type :coll-of :struct struct})
+
+;;;; coll-fixed-of
+
+(defmethod expand :coll-fixed-of [{:keys [struct length]}]
+  (let [structs (repeat length struct)]
+    {:type :tuple :structs structs}))
+
+(defn coll-fixed-of
+  "Construct fixed size collection struct."
+  [length struct]
+  {:type :coll-fixed-of :struct struct :length length})
+
+^:rct/test
+(comment
+  (b/equal? (-> [1 2 3] (pack (coll-fixed-of 3 uint8))) (b/of-useq [1 2 3])) ; => true
   )
 
 ;;;; keys
