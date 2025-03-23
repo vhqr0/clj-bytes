@@ -129,8 +129,8 @@
 
 (defn coll-of
   "Construct collection struct."
-  [struct]
-  {:type :coll-of :struct struct})
+  [st]
+  {:type :coll-of :struct st})
 
 ;;;; coll-fixed-of
 
@@ -140,8 +140,8 @@
 
 (defn coll-fixed-of
   "Construct fixed size collection struct."
-  [length struct]
-  {:type :coll-fixed-of :struct struct :length length})
+  [n st]
+  {:type :coll-fixed-of :struct st :length n})
 
 ^:rct/test
 (comment
