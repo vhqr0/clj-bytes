@@ -359,7 +359,7 @@
 (def uint16-le (int :uint16-le))
 (def uint32-le (int :uint32-le))
 
-;;; enum
+;;;; enum
 
 (defn ->kimap
   "Construct keyword/int bi-direct map."
