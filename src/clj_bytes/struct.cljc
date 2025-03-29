@@ -374,11 +374,16 @@
 
 (defn enum
   "Construct enum struct."
-  [st kimap]
-  (let [{:keys [k->i i->k]} kimap]
-    (-> st
-        (wrap k->i i->k)
-        (wrap-validator #(contains? k->i %)))))
+  ([st kimap]
+   (enum st kimap true))
+  ([st kimap strict?]
+   (let [{:keys [k->i i->k]} kimap]
+     (if-not strict?
+       (-> st
+           (wrap #(get k->i % %) #(get i->k % %)))
+       (-> st
+           (wrap k->i i->k)
+           (wrap-validator #(contains? k->i %)))))))
 
 ^:rct/test
 (comment
@@ -390,6 +395,14 @@
       (unpack (enum uint8 (->kimap {:a 1 :b 2 :c 3})))
       first)
   ;; => :b
+  (-> (b/of-seq [4])
+      (unpack (enum uint8 (->kimap {:a 1 :b 2 :c 3}) false))
+      first)
+  ;; => 4
+  (-> 2
+      (pack (enum uint8 (->kimap {:a 1 :b 2 :c 3}) false))
+      (b/equal? (b/of-seq [2])))
+  ;; => true
   )
 
 ;;;; bits
