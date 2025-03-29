@@ -283,9 +283,9 @@
 ;;;; bytes-var
 
 (defmethod expand :bytes-var [{:keys [length-struct]}]
-  (-> (key-fns
-       :length (constantly length-struct)
-       :content (comp bytes-fixed :length))
+  (-> (keys
+       :length length-struct
+       :content (lazy (comp bytes-fixed :length)))
       (wrap (fn [content] {:length (b/count content) :content content})
             :content)))
 
