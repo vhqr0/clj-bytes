@@ -145,11 +145,18 @@
 
 ;;;; keys
 
+(defn unlazy
+  "Realized possible lazy struct."
+  [st m]
+  (if-not (= (:type st) :lazy)
+    st
+    ((:struct-fn st) m)))
+
 (defmethod pack :keys [m {:keys [key-structs]}]
   (->> key-structs
        (map
         (fn [[k st]]
-          (pack (get m k) st)))
+          (pack (get m k) (unlazy st m))))
        b/join!))
 
 (defmethod unpack :keys [b {:keys [key-structs]}]
@@ -157,39 +164,19 @@
     (if (empty? ksts)
       [m b]
       (let [[k st] (first ksts)]
-        (when-let [[v b] (unpack b st)]
+        (when-let [[v b] (unpack b (unlazy st m))]
           (recur (assoc m k v) b (rest ksts)))))))
+
+(defn lazy
+  "Construct lazy struct."
+  [f]
+  {:type :lazy :struct-fn f})
 
 (defn keys
   "Construct keys struct."
   [& kvs]
   {:type :keys
    :key-structs (->> kvs (partition 2) (mapv vec))})
-
-;;;; key-fns
-
-(defmethod pack :key-fns [m {:keys [key-struct-fns]}]
-  (->> key-struct-fns
-       (map
-        (fn [[k st-fn]]
-          (pack (get m k) (st-fn m))))
-       b/join!))
-
-(defmethod unpack :key-fns [b {:keys [key-struct-fns]}]
-  (loop [m {} b b kstfns key-struct-fns]
-    (if (empty? kstfns)
-      [m b]
-      (let [[k st-fn] (first kstfns)]
-        (when-let [[v b] (unpack b (st-fn m))]
-          (recur (assoc m k v) b (rest kstfns)))))))
-
-(defn key-fns
-  "Construct contextual keys struct.
-  Similar to `keys`, but struct of each keys are contextual,
-  calculate by context when need."
-  [& kvs]
-  {:type :key-fns
-   :key-struct-fns (->> kvs (partition 2) (mapv vec))})
 
 ;;;; vec-destructs
 
