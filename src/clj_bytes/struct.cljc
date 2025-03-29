@@ -362,13 +362,21 @@
 ;;; enum
 
 (defn ->kimap
+  "Construct keyword/int bi-direct map."
   [k->i]
   {:k->i k->i
    :i->k (->> k->i (map (fn [[k i]] [i k])) (into {}))})
 
+(defn kimerge
+  "Merge many kimaps."
+  [& ms]
+  (apply merge-with merge ms))
+
 ^:rct/test
 (comment
   (->kimap {:a 1 :b 2})
+  ;; => {:k->i {:a 1 :b 2} :i->k {1 :a 2 :b}}
+  (kimerge (->kimap {:a 1}) (->kimap {:b 2}))
   ;; => {:k->i {:a 1 :b 2} :i->k {1 :a 2 :b}}
   )
 
