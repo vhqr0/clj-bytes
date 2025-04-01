@@ -136,7 +136,7 @@
   ([st]
    {:type :coll-of :struct st})
   ([n st]
-   {:pre [(neg-int? n)]}
+   {:pre [(nat-int? n)]}
    {:type :coll-of :struct st :length n}))
 
 ^:rct/test
@@ -243,7 +243,7 @@
 (defn bytes-fixed
   "Construct fixed length bytes struct."
   [n]
-  {:pre [(neg-int? n)]}
+  {:pre [(nat-int? n)]}
   {:type :bytes-fixed :length n})
 
 ^:rct/test
