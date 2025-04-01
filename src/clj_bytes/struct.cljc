@@ -136,6 +136,7 @@
   ([st]
    {:type :coll-of :struct st})
   ([n st]
+   {:pre [(neg-int? n)]}
    {:type :coll-of :struct st :length n}))
 
 ^:rct/test
@@ -242,6 +243,7 @@
 (defn bytes-fixed
   "Construct fixed length bytes struct."
   [n]
+  {:pre [(neg-int? n)]}
   {:type :bytes-fixed :length n})
 
 ^:rct/test
@@ -265,6 +267,7 @@
 (defn bytes-delimited
   "Construct delimiterd bytes struct."
   [delimiter]
+  {:pre [(b/instance? delimiter)]}
   {:type :bytes-delimited :delimiter delimiter})
 
 ^:rct/test
