@@ -146,7 +146,12 @@
 
 ;;;; keys
 
-(defn unlazy
+(defn lazy
+  "Construct lazy struct."
+  [f]
+  {:type :lazy :struct-fn f})
+
+(defn ensure-lazy-realized
   "Realized possible lazy struct."
   [st m]
   (if-not (= (:type st) :lazy)
@@ -157,7 +162,7 @@
   (->> key-structs
        (map
         (fn [[k st]]
-          (pack (get m k) (unlazy st m))))
+          (pack (get m k) (ensure-lazy-realized st m))))
        b/join!))
 
 (defmethod unpack :keys [b {:keys [key-structs]}]
@@ -165,13 +170,8 @@
     (if (empty? ksts)
       [m b]
       (let [[k st] (first ksts)]
-        (when-let [[v b] (unpack b (unlazy st m))]
+        (when-let [[v b] (unpack b (ensure-lazy-realized st m))]
           (recur (assoc m k v) b (rest ksts)))))))
-
-(defn lazy
-  "Construct lazy struct."
-  [f]
-  {:type :lazy :struct-fn f})
 
 (defn keys
   "Construct keys struct."
@@ -179,7 +179,7 @@
   {:type :keys
    :key-structs (->> kvs (partition 2) (mapv vec))})
 
-;;;; vec-destructs
+;;;;; destructs
 
 (defn vec-destruct-pack
   "Vec destruct pack in map."
@@ -191,10 +191,22 @@
   [m [vk ks]]
   (merge m (zipmap ks (get m vk))))
 
+(defn map-destruct-pack
+  "Map destruct pack in map."
+  [m [mk ks]]
+  (assoc m mk (select-keys m ks)))
+
+(defn map-destruct-unpack
+  "Map destruct unpack in map."
+  [m [mk ks]]
+  (merge m (select-keys (get m mk) ks)))
+
 ^:rct/test
 (comment
   (vec-destruct-pack {:a 1 :b 2} [:a-b [:a :b]]) ; => {:a 1 :b 2 :a-b [1 2]}
   (vec-destruct-unpack {:a-b [1 2]} [:a-b [:a :b]]) ; => {:a 1 :b 2 :a-b [1 2]}
+  (map-destruct-pack {:a 1 :b 2} [:a-b [:a :b]]) ; => {:a 1 :b 2 :a-b {:a 1 :b 2}}
+  (map-destruct-unpack {:a-b {:a 1 :b 2}} [:a-b [:a :b]]) ; => {:a-b {:a 1 :b 2} :a 1 :b 2}
   )
 
 (defn wrap-vec-destructs
@@ -202,10 +214,16 @@
   [st dests]
   (-> st
       (wrap
-       (fn [m]
-         (->> dests (reduce vec-destruct-pack m)))
-       (fn [m]
-         (->> dests (reduce vec-destruct-unpack m))))))
+       #(->> dests (reduce vec-destruct-pack %))
+       #(->> dests (reduce vec-destruct-unpack %)))))
+
+(defn wrap-map-destructs
+  "Wrap map destructs around keys struct."
+  [st dests]
+  (-> st
+      (wrap
+       #(->> dests (reduce map-destruct-pack %))
+       #(->> dests (reduce map-destruct-unpack %)))))
 
 ^:rct/test
 (comment
@@ -216,6 +234,22 @@
   (-> (b/of-useq [69])
       (unpack-one (-> (keys :a-b (bits [4 4])) (wrap-vec-destructs {:a-b [:a :b]}))))
   ;; => {:a-b [4 5] :a 4 :b 5}
+  )
+
+;;;;; merge
+
+(defn wrap-merge
+  "Wrap merge default around keys struct."
+  [st default]
+  (-> st
+      (wrap
+       (partial merge default)
+       (partial merge default))))
+
+^:rct/test
+(comment
+  (-> {:a 1} (pack (-> (keys :a uint8 :b uint8) (wrap-merge {:a 0 :b 0}))) b/useq) ; => [1 0]
+  (-> (b/of-useq [1 0]) (unpack-one (-> (keys :a uint8 :b uint8) (wrap-merge {:a 0 :b 0})))) ; => {:a 1 :b 0}
   )
 
 ;;; primitives
