@@ -1,10 +1,7 @@
-(ns clj-bytes.core2-test
+(ns clj-bytes.core-test
   (:require [clojure.test :refer [run-tests deftest testing is]]
-            [clj-bytes.core2 :as sut]
-            #?@(:cljs [[clj-bytes.core2 :refer [bytes? byte-array aset-byte]]])))
-
-(defn -main [& _]
-  (run-tests 'clj-bytes.core2-test))
+            [clj-bytes.core :as sut]
+            #?@(:cljs [[clj-bytes.core :refer [bytes? byte-array aset-byte]]])))
 
 (deftest base-test
   (testing "Core"

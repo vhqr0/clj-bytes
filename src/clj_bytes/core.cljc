@@ -1,4 +1,4 @@
-(ns clj-bytes.core2
+(ns clj-bytes.core
   (:refer-clojure :exclude [rand])
   (:require #?@(:clj [[clj-bytes.clj.impl :as impl]])
             #?@(:cljs [[clj-bytes.cljs.impl :as impl]])))

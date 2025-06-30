@@ -1,6 +1,6 @@
-(ns clj-bytes.struct2
+(ns clj-bytes.struct
   (:refer-clojure :exclude [keys byte short int long])
-  (:require [clj-bytes.core2 :as b :refer [#?@(:cljs [byte-array])]]))
+  (:require [clj-bytes.core :as b :refer [#?@(:cljs [byte-array])]]))
 
 (defprotocol Struct
   (-unpack [this b s e]
