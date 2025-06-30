@@ -1,14 +1,13 @@
 {:paths         ["src" "target/classes"]
  :deps          {org.clojure/clojure {:mvn/version "1.12.1"}}
+ :aliases       {:dev       {:extra-paths ["test"]}
+                 :test      {:main-opts ["-m" "clj-bytes.test-main"]}
+                 :cljs      {:extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}}}
+                 :cljs-dev  {:extra-deps {com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}
+                                          com.bhauman/figwheel-main       {:mvn/version "0.2.3"}}}
+                 :cljs-test {:main-opts ["-m" "cljs.main" "-v" "-co" "cljs_build/node_test.edn" "-c"]}
+                 :build     {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.9"}}
+                             :ns-default build}}
  :deps/prep-lib {:alias  :build
                  :fn     compile
-                 :ensure "target/classes"}
- :aliases       {:dev      {:extra-paths ["test"]
-                            :extra-deps  {io.github.matthewdowney/rich-comment-tests {:git/tag "v1.0.3" :git/sha "a8711e9"}}}
-                 :test     {:extra-deps {lambdaisland/kaocha-cloverage {:mvn/version "1.1.89"}}
-                            :main-opts  ["-m" "kaocha.runner"]}
-                 :cljs     {:extra-deps {org.clojure/clojurescript {:mvn/version "1.11.132"}}}
-                 :cljs-dev {:extra-deps {com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}
-                                         com.bhauman/figwheel-main       {:mvn/version "0.2.3"}}}
-                 :build    {:deps       {io.github.clojure/tools.build {:mvn/version "0.10.9"}}
-                            :ns-default build}}}
+                 :ensure "target/classes"}}

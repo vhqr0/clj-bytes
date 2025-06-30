@@ -39,17 +39,17 @@
   ([x xs xe y ys ye]
    (Arrays/equals (bytes x) (int xs) (int xe) (bytes y) (int ys) (int ye))))
 
-(defn index-of
-  ([b sep]
-   (Utils/indexOfBytes (bytes b) (bytes sep)))
-  ([b s e sep]
-   (Utils/indexOfBytes (bytes b) (int s) (int e) (bytes sep))))
-
 (defn join
   ([bs]
    (Utils/joinBytesArray (into-array bytes-class bs)))
   ([sep bs]
    (join (interpose sep bs))))
+
+(defn index-of
+  ([b sep]
+   (Utils/getIndexOfSepInBytes (bytes b) (bytes sep)))
+  ([b s e sep]
+   (Utils/getIndexOfSepInBytes (bytes b) (int s) (int e) (bytes sep))))
 
 (defn put-byte [b s i] (aset-byte b s (byte i)))
 (defn get-byte [b s] (aget b s))

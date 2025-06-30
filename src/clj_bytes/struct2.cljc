@@ -41,6 +41,14 @@ Output: packed bytes b."))
         (let [[s d] (-unpack st b s e)]
           (recur s (conj ds d)))))))
 
+(defn pack-one
+  [st d]
+  (-pack st d))
+
+(defn pack-many
+  [st ds]
+  (->> ds (map (partial pack-one st)) b/join))
+
 (defrecord WrapStruct [struct unpack-fn pack-fn]
   Struct
   (-unpack [_ b s e]
@@ -52,6 +60,10 @@ Output: packed bytes b."))
 (defn wrap
   [st unpack-fn pack-fn]
   (->WrapStruct st unpack-fn pack-fn))
+
+(defn wrap-struct
+  [bytes-st st]
+  (wrap bytes-st (partial unpack-one st) (partial pack-one st)))
 
 (defrecord CollStruct [struct]
   Struct

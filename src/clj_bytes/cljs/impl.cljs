@@ -75,31 +75,35 @@
           (loop [i 0]
             (if (= i xc)
               true
-              (if-not (= (aget xc i) (aget yc i))
+              (if-not (= (aget x i) (aget y i))
                 false
                 (recur (inc i)))))))))
 
-(defn index-of
-  [b s e sep]
-  (let [c (alength sep)
-        e (- e c)]
-    (loop [i s]
-      (if (= i e)
-        -1
-        (if (equals? b i (+ i c) sep 0 c)
-          i
-          (recur (inc i)))))))
-
 (defn join
-  [bs]
-  (let [nb (byte-array (->> bs (map alength) (reduce +)))]
-    (loop [o 0 bs bs]
-      (if (empty? bs)
-        nb
-        (let [b (first bs)
-              c (alength b)]
-          (copy b 0 nb o c)
-          (recur (+ o c) (rest bs)))))))
+  ([bs]
+   (let [nb (byte-array (->> bs (map alength) (reduce +)))]
+     (loop [o 0 bs bs]
+       (if (empty? bs)
+         nb
+         (let [b (first bs)
+               c (alength b)]
+           (copy b 0 nb o c)
+           (recur (+ o c) (rest bs)))))))
+  ([sep bs]
+   (join (interpose sep bs))))
+
+(defn index-of
+  ([b sep]
+   (index-of b 0 (alength b) sep))
+  ([b s e sep]
+   (let [c (alength sep)
+         e (- e c)]
+     (loop [i s]
+       (if (> i e)
+         -1
+         (if (equals? b i (+ i c) sep 0 c)
+           i
+           (recur (inc i))))))))
 
 (defn bytes->dataview
   [b]

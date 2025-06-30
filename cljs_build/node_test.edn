@@ -1,0 +1,7 @@
+{:main          clj-bytes.test-main
+ :output-dir    "target/cljs_build_node_test"
+ :output-to     "target/cljs_build_node_test/main.js"
+ :optimizations :simple
+ :static-fns    true
+ :pretty-print  true
+ :target        :nodejs}

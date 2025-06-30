@@ -8,6 +8,8 @@
 
 (deftest base-test
   (testing "Core"
+    (is (sut/equals? (byte-array [1 2 3]) (byte-array [1 2 3])))
+    (is (not (sut/equals? (byte-array [1 2 3]) (byte-array [1 2 3 4]))))
     (is (bytes? (byte-array [1 2 3])))
     (is (= 3 (alength (byte-array [1 2 3]))))
     (is (= 2 (aget (byte-array [1 2 3]) 1)))
@@ -62,7 +64,18 @@
          (byte-array [1 4 4])
          (let [b (byte-array [1 2 3])]
            (sut/fill b 1 3 4)
-           b)))))
+           b))))
+  (testing "Join"
+    (is (sut/equals?
+         (byte-array [1 2 3 4])
+         (sut/join [(byte-array [1 2 3]) (byte-array [4])])))
+    (is (sut/equals?
+         (byte-array [1 2 3])
+         (sut/join [(byte-array [1 2 3])]))))
+  (testing "Index Of"
+    (is (= 1 (sut/index-of (byte-array [1 2 3]) (byte-array [2 3]))))
+    (is (= 0 (sut/index-of (byte-array [1 2 3]) (byte-array [1 2]))))
+    (is (= -1 (sut/index-of (byte-array [1 2 3]) (byte-array [1 3]))))))
 
 (deftest int-test
   (is (sut/equals?
