@@ -63,10 +63,6 @@ Output: packed bytes b."))
   [st unpack-fn pack-fn]
   (->WrapStruct st unpack-fn pack-fn))
 
-(defn wrap-struct
-  [bytes-st st]
-  (wrap bytes-st (partial unpack-one st) (partial pack-one st)))
-
 (defrecord CollStruct [struct]
   Struct
   (-unpack [_ b s e]

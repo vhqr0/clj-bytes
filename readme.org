@@ -1,63 +1,67 @@
 * clj-bytes
 
-** why
+Binary data processing utils, supports both CLJ and CLJS.
 
-There is already a library to handle binary data:
-https://github.com/clj-commons/byte-streams. But this library only
-supports the JVM platform and is too impure.
+** api
 
-The reason I wrote this project is to provide a platform-independent
-pure binary data basic interface, as well as a set of basic
-utilities. The binary data implementation can be specified via a
-dynamic variable (clj-bytes.core.*impl*), and a reasonable default
-implementation will be provided for different platforms. Currently
-there are byte-array for JVM and ArrayBuffer for WEB.
+*** clj-bytes.core
 
-I hope this project can help write platform-independent, pure binary
-data processing logic. And it can be used in conjunction with other
-binary data related libraries (although no longer platform-independent
-and pure).
+- *rand* Make random bytes.
+- *copy* Java System/arraycopy wrapper, copy part of bytes to another bytes.
+- *copy-of* Java java.utils.Arrays/copyOf wrapper, copy start of bytes to a new bytes.
+- *copy-of-range* Java java.utils.Arrays/copyOfRange wrapper, copy part of bytes to a new bytes.
+- *fill* Java java.utils.Arrays/fill wrapper, fill part of bytes with same byte value.
+- *equals?* Java java.utils.Arrays/equals wrapper, test if two bytes are equal.
+- *join* Join seq of bytes to a new bytes, like clojure.string/join.
+- *index-of* Find index of separator in bytes, like clojure.string/index-of.
+- *put-byte/short/int/long/ubyte/ushort/uint/float/double* Put fixed num value on bytes.
+- *get-byte/short/int/long/ubyte/ushort/uint/float/double* Get fixed num value from bytes.
+- *get-str* Get str from bytes.
+- *bytes->str* Convert bytes to str.
+- *str->bytes* Convert str to bytes.
+- *bytes->hex-str* Convert bytes to hex str.
+- *hex-str->bytes* Convert hex str to bytes.
+- *bytes->mime-base64* Convert bytes to MIME base64 str.
+- *bytes->url-base64* Convert bytes to URL base64 str.
+- *mime-base64->bytes* Convert MIME base64 str to bytes.
+- *url-base64->bytes* Convert URL base64 str to bytes.
 
-** example
+*** clj-bytes.struct
 
-#+begin_src clojure
-  (require '[clj-bytes.core :as b])
-  (b/make 4) ; make bytes with length of 4
-  (b/rand 4) ; make random bytes with length of 4
-  (b/empty) ; make empty bytes
-  (b/get (b/rand 4) 0) ; get first byte
-  (b/set! (b/make 4) 0 1) ; set first byte to 1
-  (b/seq (b/rand 4)) ; convert bytes to seq
-  (b/of-seq [1 2 3 4]) ; make bytes from seq
-  (b/sub (b/rand 4) 1 2) ; make sub bytes from 1 to 2
-  (b/concat (b/rand 1) (b/rand 2) (b/rand 3)) ; concat any num of bytes
-  (b/str (b/seq [104 101 108 108 111])) ; convert bytes to string
-  (b/of-str "hello") ; make bytes from string
-  (b/int (b/seq [0x12 0x34]) :uint16-be) ; convert bytes to integer
-  (b/of-int 0x1234 :uint16-be) ; make bytes from int
-
-  ;; pure clojure impl of codec.
-  ;; *Don't rely on them.*
-  (b/hex (b/seq [0x12 0x34])) ; convert bytes to hex string
-  (b/of-hex "1234") ; make bytes from hex string
-  (b/base64 (b/of-str "hello")) ; convert bytes to base64 string
-  (b/of-base64 "aGVsbG8=") ; make bytes from base64
-#+end_src
-
-A demo project that impl socks5 proxy server based on clj-bytes and aleph: [[https://github.com/vhqr0/clj-bytes-demo-socks5][clj-bytes-demo-socks5]].
+- *unpack-one* Unpack single data from bytes.
+- *unpack-many* Unpack seq of data from bytes.
+- *pack-one* Pack single data to bytes.
+- *pack-many* Pack seq of data to bytes.
+- *wrap* Wrap a struct with pack/unpack-fn.
+- *coll* Construct struct of repeat data as base struct.
+- *tuple* Construct struct of seq of data one by one as base structs.
+- *keys* Construct struct of seq of data in a map one by one as base structs.
+- *->st-frame-fixed* Construct struct of fixed length frame.
+- *->st-frame-var* Construct struct of var length frame that length is specified in header.
+- *->st-frame-delimited* Construct struct of frame that end with a delimiter.
+- *st-bytes* Struct of bytes.
+- *st-str* Struct of str.
+- *->st-line* Construct struct of line with specified end delimiter.
+- *st-unix-line* Struct of unix line that end with \n.
+- *st-http-line* Struct of http line that end with \r\n.
+- *st-byte/short/int/long/ubyte/ushort/uint/float/double* Struct of fixed num.
 
 ** dev
 
-*** test
+Emacs .dir-locals.el example:
 
-#+begin_src sh
-  make test
+#+begin_src elisp
+  ;; clj+cljs
+  ((nil . ((cider-clojure-cli-aliases . ":dev:cljs:cljs-dev"))))
+  ;; clj only
+  ((nil . ((cider-clojure-cli-aliases . ":dev"))))
 #+end_src
 
-*** cljs
+Test:
 
-.dir-locals.el example:
-
-#+begin_src emacs-lisp
-  ((clojurescript-mode . ((cider-clojure-cli-global-options . "-A:cljs:cljs-dev"))))
+#+begin_src sh
+  # test clj
+  make test
+  # test cljs
+  make cljs_test
 #+end_src
