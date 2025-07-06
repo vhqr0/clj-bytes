@@ -25,21 +25,23 @@ Output: packed bytes b."))
   (throw (ex-info "Pack invalid data" {})))
 
 (defn unpack-one
-  [st b]
-  (let [e (alength b)
-        [s d] (-unpack st b 0 e)]
-    (if (= s e)
-      d
-      (unpack-not-eof-error))))
+  ([st b]
+   (unpack-one st b 0 (alength b)))
+  ([st b s e]
+   (let [[s d] (-unpack st b s e)]
+     (if (= s e)
+       d
+       (unpack-not-eof-error)))))
 
 (defn unpack-many
-  [st b]
-  (let [e (alength b)]
-    (loop [s 0 ds []]
-      (if (= s e)
-        ds
-        (let [[s d] (-unpack st b s e)]
-          (recur s (conj ds d)))))))
+  ([st b]
+   (unpack-many st b 0 (alength b)))
+  ([st b s e]
+   (loop [s s ds []]
+     (if (= s e)
+       ds
+       (let [[s d] (-unpack st b s e)]
+         (recur s (conj ds d)))))))
 
 (defn pack-one
   [st d]
@@ -125,74 +127,78 @@ Output: packed bytes b."))
 
 (def st-bytes (->BytesStruct))
 
-(defrecord FixedLengthBytesStruct [length]
+(defrecord FixedLengthFrameStruct [length content-struct]
   Struct
   (-unpack [_ b s e]
     (let [ns (+ s length)]
       (if (<= ns e)
-        [ns (b/copy-of-range b s ns)]
+        [ns (unpack-one content-struct b s ns)]
         (unpack-eof-error))))
-  (-pack [_ b]
-    (if (= (alength b) length)
-      b
-      (pack-invalid-data-error))))
+  (-pack [_ d]
+    (let [b (pack-one content-struct d)]
+      (if (= (alength b) length)
+        b
+        (pack-invalid-data-error)))))
 
-(defn ->st-bytes-fixed
-  [length]
-  (->FixedLengthBytesStruct length))
+(defn ->st-frame-fixed
+  ([c]
+   (->st-frame-fixed c st-bytes))
+  ([c content-st]
+   (->FixedLengthFrameStruct c content-st)))
 
-(defn unpack-bytes-fixed
-  [length b s e]
-  (-unpack (->st-bytes-fixed length) b s e))
-
-(defrecord VarLengthBytesStruct [length-struct]
+(defrecord VarLengthFrameStruct [length-struct content-struct]
   Struct
   (-unpack [_ b s e]
     (let [[s length] (-unpack length-struct b s e)
           ns (+ s length)]
       (if (<= ns e)
-        [ns (b/copy-of-range b s ns)]
+        [ns (unpack-one content-struct b s ns)]
         (unpack-eof-error))))
-  (-pack [_ b]
-    (b/join [(-pack length-struct (alength b)) b])))
+  (-pack [_ d]
+    (let [b (pack-one content-struct d)
+          length (alength b)]
+      (b/join [(pack-one length-struct length) b]))))
 
-(defn ->st-bytes-var
-  [st-length]
-  (->VarLengthBytesStruct st-length))
+(defn ->st-frame-var
+  ([length-st]
+   (->st-frame-var length-st st-bytes))
+  ([length-st content-st]
+   (->VarLengthFrameStruct length-st content-st)))
 
-(defrecord DelimitedBytesStruct [delimiter]
+(defrecord DelimitedFrameStruct [delimiter content-struct]
   Struct
   (-unpack [_ b s e]
     (let [ns (b/index-of b s e delimiter)]
       (if-not (= ns -1)
-        [(+ ns (alength delimiter)) (b/copy-of-range b s ns)]
+        [(+ ns (alength delimiter)) (unpack-one content-struct b s ns)]
         (unpack-eof-error))))
   (-pack [_ d]
-    (b/join [d delimiter])))
+    (let [b (pack-one content-struct d)]
+      (b/join [b delimiter]))))
 
-(defn ->st-bytes-delimited
-  [delimiter]
-  (->DelimitedBytesStruct delimiter))
+(defn ->st-frame-delimited
+  ([delim]
+   (->st-frame-delimited delim st-bytes))
+  ([delim content-st]
+   (->DelimitedFrameStruct delim content-st)))
 
-(defrecord StrStruct [bytes-struct]
+(defrecord StrStruct []
   Struct
   (-unpack [_ b s e]
-    (let [[s b] (-unpack bytes-struct b s e)]
-      [s (b/bytes->str b)]))
+    [e (b/get-str b s (- e s))])
   (-pack [_ s]
-    (-pack bytes-struct (b/str->bytes s))))
+    (b/str->bytes s)))
 
-(def st-str (->StrStruct st-bytes))
+(def st-str (->StrStruct))
 
 (defn ->st-line
-  [delimiter]
-  (let [st-bytes (->st-bytes-delimited (b/str->bytes delimiter))]
-    (->StrStruct st-bytes)))
+  [delim]
+  (->st-frame-delimited (b/str->bytes delim) st-str))
 
 (def st-unix-line (->st-line "\n"))
 (def st-http-line (->st-line "\r\n"))
 
-(defrecord IntStruct [get-fn put-fn length]
+(defrecord FixedNumStruct [get-fn put-fn length]
   Struct
   (-unpack [_ b s e]
     (let [ns (+ s length)]
@@ -204,10 +210,12 @@ Output: packed bytes b."))
       (put-fn b 0 i)
       b)))
 
-(def st-byte   (->IntStruct b/get-byte   b/put-byte   1))
-(def st-short  (->IntStruct b/get-short  b/put-short  2))
-(def st-int    (->IntStruct b/get-int    b/put-int    4))
-(def st-long   (->IntStruct b/get-long   b/put-long   8))
-(def st-ubyte  (->IntStruct b/get-ubyte  b/put-ubyte  1))
-(def st-ushort (->IntStruct b/get-ushort b/put-ushort 2))
-(def st-uint   (->IntStruct b/get-uint   b/put-uint   4))
+(def st-byte   (->FixedNumStruct b/get-byte   b/put-byte   1))
+(def st-short  (->FixedNumStruct b/get-short  b/put-short  2))
+(def st-int    (->FixedNumStruct b/get-int    b/put-int    4))
+(def st-long   (->FixedNumStruct b/get-long   b/put-long   8))
+(def st-ubyte  (->FixedNumStruct b/get-ubyte  b/put-ubyte  1))
+(def st-ushort (->FixedNumStruct b/get-ushort b/put-ushort 2))
+(def st-uint   (->FixedNumStruct b/get-uint   b/put-uint   4))
+(def st-float  (->FixedNumStruct b/get-float  b/put-float  4))
+(def st-double (->FixedNumStruct b/get-double b/put-double 8))

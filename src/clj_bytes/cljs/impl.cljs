@@ -138,6 +138,10 @@
   [a]
   (js/Int8Array. (.-buffer a) (.-byteOffset a)))
 
+(defn get-str
+  [b s c]
+  (.decode (js/TextDecoder.) (.subarray b s (+ s c))))
+
 (defn bytes->str
   [b]
   (.decode (js/TextDecoder.) b))

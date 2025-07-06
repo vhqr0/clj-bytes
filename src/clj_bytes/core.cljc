@@ -34,6 +34,7 @@
 (def get-uint           impl/get-uint)
 (def get-float          impl/get-float)
 (def get-double         impl/get-double)
+(def get-str            impl/get-str)
 (def bytes->str         impl/bytes->str)
 (def str->bytes         impl/str->bytes)
 (def bytes->hex         impl/bytes->hex)

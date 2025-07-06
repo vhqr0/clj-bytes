@@ -74,6 +74,10 @@
 (defn get-ushort [b s] (bit-and 0xffff     (get-short b s)))
 (defn get-uint   [b s] (bit-and 0xffffffff (get-int   b s)))
 
+(defn get-str
+  ^String [b s c]
+  (String. (bytes b) (int s) (int c)))
+
 (defn bytes->str
   ^String [b]
   (String. (bytes b)))
