@@ -101,5 +101,5 @@
   (is (= "hello" (-> "hello" b/str->bytes b/bytes->mime-base64 b/mime-base64->bytes b/bytes->str))))
 
 (deftest struct-test
-  (is (= "hello\r\n" (-> (st/->st-line "\r\n") (st/pack-one "hello") b/bytes->str)))
-  (is (= ["hello" "world"] (-> (st/coll (st/->st-line "\r\n")) (st/unpack-one (b/str->bytes "hello\r\nworld\r\n"))))))
+  (is (= "hello\r\n" (-> st/st-http-line (st/pack-one "hello") b/bytes->str)))
+  (is (= ["hello" "world"] (-> (st/coll st/st-http-line) (st/unpack-one (b/str->bytes "hello\r\nworld\r\n"))))))
