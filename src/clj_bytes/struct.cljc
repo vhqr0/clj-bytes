@@ -198,7 +198,7 @@ Output: packed bytes b."))
 (def st-unix-line (->st-line "\n"))
 (def st-http-line (->st-line "\r\n"))
 
-(defrecord FixedNumberStruct [get-fn put-fn length]
+(defrecord FixedNumStruct [get-fn put-fn length]
   Struct
   (-unpack [_ b s e]
     (let [ns (+ s length)]
@@ -210,12 +210,12 @@ Output: packed bytes b."))
       (put-fn b 0 i)
       b)))
 
-(def st-byte   (->FixedNumberStruct b/get-byte   b/put-byte   1))
-(def st-short  (->FixedNumberStruct b/get-short  b/put-short  2))
-(def st-int    (->FixedNumberStruct b/get-int    b/put-int    4))
-(def st-long   (->FixedNumberStruct b/get-long   b/put-long   8))
-(def st-ubyte  (->FixedNumberStruct b/get-ubyte  b/put-ubyte  1))
-(def st-ushort (->FixedNumberStruct b/get-ushort b/put-ushort 2))
-(def st-uint   (->FixedNumberStruct b/get-uint   b/put-uint   4))
-(def st-float  (->FixedNumberStruct b/get-float  b/put-float  4))
-(def st-double (->FixedNumberStruct b/get-double b/put-double 8))
+(def st-byte   (->FixedNumStruct b/get-byte   b/put-byte   1))
+(def st-short  (->FixedNumStruct b/get-short  b/put-short  2))
+(def st-int    (->FixedNumStruct b/get-int    b/put-int    4))
+(def st-long   (->FixedNumStruct b/get-long   b/put-long   8))
+(def st-ubyte  (->FixedNumStruct b/get-ubyte  b/put-ubyte  1))
+(def st-ushort (->FixedNumStruct b/get-ushort b/put-ushort 2))
+(def st-uint   (->FixedNumStruct b/get-uint   b/put-uint   4))
+(def st-float  (->FixedNumStruct b/get-float  b/put-float  4))
+(def st-double (->FixedNumStruct b/get-double b/put-double 8))
